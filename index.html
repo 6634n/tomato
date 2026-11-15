@@ -1,0 +1,2088 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="像素荒村">
+<meta name="theme-color" content="#8AD8FF">
+<meta name="format-detection" content="telephone=no">
+<title>像素荒村</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#8AD8FF;
+  --panel:#FFFBF0;
+  --cream:#FFEFC2;
+  --ink:#3A2A12;
+  --ink2:#7A6A50;
+  --line:#2A220F;
+  --gold:#FFC81A;
+  --green:#5AC83A;
+  --red:#E8302A;
+  --orange:#C4562A;
+  --safe-b:env(safe-area-inset-bottom,0px);
+  --safe-t:env(safe-area-inset-top,0px);
+}
+html{-webkit-text-size-adjust:100%}
+body{
+  min-height:100vh;min-height:100svh;
+  background:var(--bg);
+  background-image:
+    linear-gradient(rgba(255,255,255,.22) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,.22) 1px,transparent 1px);
+  background-size:16px 16px;
+  font-family:ui-monospace,"SF Mono",Menlo,Consolas,"Courier New",monospace;
+  color:var(--ink);
+  display:flex;justify-content:center;align-items:flex-start;
+  touch-action:manipulation;
+  overscroll-behavior:none;
+}
+
+/* ---------- 外壳：手机上满屏不滚动 ---------- */
+#app{
+  width:100%;max-width:100%;
+  height:100vh;height:100svh;
+  background:var(--panel);
+  display:flex;flex-direction:column;
+  overflow:hidden;
+  padding-top:var(--safe-t);
+}
+@media (min-width:641px){
+  body{padding:20px;align-items:center}
+  #app{
+    width:min(100%, 1180px);
+    height:min(920px, calc(100vh - 40px));
+    max-height:calc(100vh - 40px);
+    border:4px solid var(--line);
+    box-shadow:8px 8px 0 var(--line);
+    padding-top:0;
+  }
+}
+
+/* ---------- 顶栏 ---------- */
+#topbar{
+  flex:0 0 auto;
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  padding:9px 13px;background:var(--line);color:var(--gold);
+  font-weight:bold;font-size:14px;letter-spacing:1px;
+}
+#save-btn{
+  padding:5px 13px;font-size:14px;letter-spacing:0;
+  background:transparent;color:var(--gold);
+  border:2px solid var(--gold);box-shadow:none;min-height:32px;
+}
+#save-btn:active:not(:disabled){background:var(--gold);color:var(--line)}
+
+/* ---------- 时间条 ---------- */
+#times{
+  flex:0 0 auto;
+  display:flex;gap:5px;
+  padding:7px 12px 9px;background:var(--line);
+}
+#times button{
+  flex:1 1 0;min-width:0;
+  padding:6px 0;font-size:14px;
+  background:#FFFBF0;color:var(--ink);
+  border:2px solid var(--line);
+  box-shadow:2px 2px 0 rgba(0,0,0,.5);
+  min-height:34px;
+}
+#times button.on{background:var(--gold)}
+#times button:disabled{opacity:.45}
+
+/* ---------- 状态栏 ---------- */
+.stats{
+  flex:0 0 auto;
+  display:grid;grid-template-columns:repeat(2,1fr);gap:5px;
+  padding:8px;background:var(--cream);
+  border-bottom:4px solid var(--line);
+}
+@media (min-width:560px){.stats{grid-template-columns:repeat(4,1fr)}}
+.stat{
+  border:3px solid var(--line);background:#fff;
+  padding:3px 7px;font-size:14px;font-weight:bold;
+  display:flex;align-items:center;gap:5px;min-height:30px;
+  min-width:0;
+}
+.stat .k{color:#A09070;font-size:13px;flex:0 0 auto}
+.stat .v{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ---------- 日志 ---------- */
+#log{
+  flex:1 1 auto;min-height:80px;
+  overflow-y:auto;-webkit-overflow-scrolling:touch;
+  padding:13px 14px;
+  background:var(--panel);
+  border-bottom:4px solid var(--line);
+  font-size:14px;line-height:1.9;
+  background-image:repeating-linear-gradient(
+    0deg,transparent,transparent 3px,rgba(0,0,0,.02) 3px,rgba(0,0,0,.02) 4px
+  );
+  overscroll-behavior:contain;
+}
+#log::-webkit-scrollbar{width:8px}
+#log::-webkit-scrollbar-track{background:#F2EAD8}
+#log::-webkit-scrollbar-thumb{background:#C9BFA8;border:2px solid #F2EAD8}
+#log{flex:1 1 auto;min-height:140px;height:260px;max-height:75%;resize:none}
+@media (min-width:641px){#log{height:340px;min-height:180px}}
+.line{animation:fadein .22s}
+@keyframes fadein{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.l-title{color:var(--ink);font-weight:bold;letter-spacing:1px}
+.l-amb{color:#95876C}
+.l-food{color:var(--orange)}
+.l-wood{color:#3F7A1F}
+.l-ore{color:#2F5EA8}
+.l-gain{
+  background:var(--gold);border:2px solid var(--line);
+  padding:5px 9px;margin:7px 0;font-weight:bold;color:var(--ink);
+  box-shadow:3px 3px 0 var(--line);
+}
+.l-win{color:#2F7A1F;font-weight:bold}
+
+/* ---------- 村庄 ---------- */
+#village{
+  flex:1 1 auto;min-height:0;
+  overflow-y:auto;-webkit-overflow-scrolling:touch;
+  padding:8px;background:var(--cream);
+  border-bottom:4px solid var(--line);
+  overscroll-behavior:contain;
+}
+.vhead{
+  font-size:13px;font-weight:bold;color:#8A7A60;
+  margin-bottom:6px;letter-spacing:1px;
+}
+.vhead span{color:#B06A00}
+.vslots{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}
+@media (min-width:560px){.vslots{grid-template-columns:repeat(4,1fr)}}
+.slot{
+  border:3px solid var(--line);background:#fff;
+  padding:6px;min-height:82px;
+  display:flex;flex-direction:column;gap:3px;
+  font-size:14px;min-width:0;
+}
+.slot.built{background:#E4F5D6}
+.slot .n{font-weight:bold;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.slot .d{color:#8A7A60;font-size:13px;flex:1;line-height:1.45}
+.slot .cost{font-size:13px;color:#B06A00;font-weight:bold}
+.slot button{
+  padding:4px;font-size:14px;margin-top:2px;
+  min-height:30px;
+}
+.combo-status{margin-top:7px;padding:6px 8px;border:2px dashed #B9A77D;background:#FFF9E8;font-size:13px;line-height:1.6;color:#7A6A50}
+.combo-status strong{color:#8A5B12}
+.combo-status .active{color:#39752B;font-weight:bold}
+.combo-status .waiting{color:#9A8A70}
+
+/* ---------- 页面切换与内容区 ---------- */
+#page-tabs{flex:0 0 auto;display:flex;gap:8px;padding:8px 12px;background:var(--cream);border-bottom:3px solid var(--line)}
+#page-tabs button{flex:1;min-height:40px;padding:7px 12px;font-size:14px;background:#fff}
+#page-tabs button.active{background:var(--gold)}
+.page-panel{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+.page-panel.hidden{display:none}
+#explore-page{background:var(--panel)}
+#village-page{overflow-y:auto;-webkit-overflow-scrolling:touch;background:var(--cream)}
+#village{flex:1 1 auto;max-height:none;overflow:visible;border:0}
+#log-resize-handle{flex:0 0 16px;display:flex;align-items:center;justify-content:center;background:var(--cream);border-top:2px solid var(--line);cursor:ns-resize;touch-action:none;user-select:none}
+#log-resize-handle::after{content:"";width:54px;height:4px;border-radius:4px;background:#9A8A70;box-shadow:0 5px 0 #C7B998}
+#log-resize-handle:focus-visible{outline:3px solid #2F5EA8;outline-offset:-3px}
+.village-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px 0}
+.village-toolbar .hint{font-size:12px;color:#8A7A60}
+#resident-open-btn{font-size:13px;min-height:36px;padding:6px 11px;background:#fff}
+@media (min-width:641px){
+  #page-tabs{padding:10px 16px}
+  #page-tabs button{max-width:220px}
+  #village{padding:12px 16px}
+  .vslots{grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+  .slot{min-height:130px;padding:10px;gap:6px}
+  .slot .d,.slot .cost{font-size:13px}
+  .slot button{font-size:13px;min-height:38px}
+  .combo-status{font-size:13px;padding:10px 12px}
+}
+@media (max-width:640px){
+  #app{max-width:100%}
+  #log{min-height:110px;height:36svh}
+  #village-page{min-height:0}
+}
+
+/* ---------- 底栏 ---------- */
+#bar{
+  flex:0 0 auto;
+  display:flex;align-items:center;gap:9px;
+  padding:9px 13px;
+  padding-bottom:calc(9px + var(--safe-b));
+  background:var(--cream);
+}
+#clock{
+  font-size:24px;font-weight:bold;letter-spacing:1px;
+  font-variant-numeric:tabular-nums;flex:0 0 auto;
+}
+#phase-label{
+  flex:1 1 auto;min-width:0;
+  font-size:13px;color:#A09070;letter-spacing:1px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+#btn{
+  flex:0 0 auto;margin-left:auto;
+  font-size:14px;padding:12px 16px;min-height:46px;
+  background:var(--green);
+}
+@media (max-width:359px){
+  #phase-label{display:none}
+  #btn{font-size:14px;padding:9px 13px}
+}
+
+/* ---------- 通用按钮 ---------- */
+button{
+  font-family:inherit;font-weight:bold;color:var(--ink);
+  border:3px solid var(--line);
+  box-shadow:3px 3px 0 var(--line);
+  cursor:pointer;background:#fff;
+  transition:none;user-select:none;
+  -webkit-user-select:none;
+  touch-action:manipulation;
+}
+button:active:not(:disabled){
+  transform:translate(3px,3px);
+  box-shadow:0 0 0 var(--line);
+}
+button:disabled{opacity:.45;cursor:not-allowed}
+
+/* 矮屏压缩 */
+@media (max-height:620px){
+  #topbar{padding:6px 12px;font-size:14px}
+  #times{padding:5px 8px 7px}
+  #times button{min-height:30px;font-size:14px}
+  .stats{padding:6px;gap:4px}
+  .stat{min-height:26px;padding:2px 6px}
+  #log{font-size:14px;line-height:1.75;padding:8px 13px}
+  .slot{min-height:72px}
+  #bar{padding:7px 12px;padding-bottom:calc(7px + var(--safe-b))}
+  #clock{font-size:21px}
+  #btn{min-height:42px;padding:8px 14px}
+}
+
+/* ---------- 居民档案与建筑卡片 ---------- */
+.resident-panel{margin-top:8px;padding:8px;background:#FFF9E8;border:2px solid #D7C9A8}
+.resident-head{font-size:13px;font-weight:bold;color:#8A6B35;margin-bottom:8px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.resident-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.resident-card{display:flex;gap:10px;align-items:flex-start;background:#fff;border:2px solid #D7C9A8;padding:10px;min-width:0;line-height:1.5;border-radius:4px}
+.resident-avatar{width:42px;height:42px;flex:0 0 42px;display:flex;align-items:center;justify-content:center;background:#EEF3E5;border:2px solid #D7C9A8;border-radius:10px;font-size:23px}
+.resident-info{min-width:0;flex:1}
+.resident-card .resident-name{font-size:15px;font-weight:bold;color:#5C481F}
+.resident-card .resident-role{font-size:13px;color:#A06B25;margin:2px 0}
+.resident-card .resident-bio{font-size:13px;color:#7A6A50;line-height:1.6;margin-top:3px}
+.resident-status{display:inline-flex;margin-top:5px;padding:2px 7px;background:#EDF5E9;border:1px solid #C8D9BC;color:#55734A;font-size:12px;border-radius:3px}
+.resident-story-state{font-size:12px;color:#8B806A;margin-top:5px}
+.resident-empty{font-size:13px;color:#A09070;line-height:1.7;padding:4px 0;grid-column:1/-1}
+.resident-count{color:#B06A00}
+#resident-modal .modal-box{max-width:760px}
+#resident-modal .resident-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+.slot{align-content:start}
+.slot .building-meta{display:flex;flex-wrap:wrap;gap:5px;margin-top:3px}
+.slot .building-tag{display:inline-block;padding:2px 6px;background:#F1F3E8;border:1px solid #D7C9A8;color:#6D7656;font-size:11px;line-height:1.5}
+.slot .building-detail{font-size:12px;color:#786B53;line-height:1.55}
+.slot .building-status{font-size:12px;font-weight:bold;color:#6B8054}
+.slot .building-upgrade{font-size:11px;color:#9A896D;line-height:1.5}
+.slot.built{border-color:#A9BE91;background:#F5F8EF}
+@media(max-width:640px){
+  #resident-modal .modal-box{max-width:100%}
+  #resident-modal .resident-grid{grid-template-columns:1fr}
+  .resident-card{padding:10px;gap:9px}
+  .resident-avatar{width:40px;height:40px;flex-basis:40px}
+  .slot .building-detail,.slot .building-upgrade{font-size:12px}
+}
+@media(max-width:380px){
+  .resident-card .resident-name{font-size:14px}
+  .resident-card .resident-role,.resident-card .resident-bio{font-size:12px}
+  .resident-avatar{width:36px;height:36px;flex-basis:36px;font-size:20px}
+}
+
+/* ---------- 聚落记事 ---------- */
+#chronicle-list{display:flex;flex-direction:column;gap:8px}
+.chronicle-entry{padding:8px 9px;background:#fff;border:2px solid #D7C9A8;line-height:1.6;font-size:14px}
+.chronicle-entry .when{font-size:13px;color:#A09070;margin-bottom:3px}
+.chronicle-entry .what{font-weight:bold;color:#5C481F}
+.chronicle-entry .detail{color:#7A6A50;margin-top:2px}
+.chronicle-empty{padding:18px 8px;text-align:center;color:#A09070;font-size:14px;line-height:1.8}
+
+/* ---------- 弹层 ---------- */
+#journal-modal{
+  position:fixed;inset:0;z-index:60;
+  background:rgba(20,16,8,.55);
+  display:flex;align-items:center;justify-content:center;
+  padding:16px;
+  padding-bottom:calc(16px + var(--safe-b));
+}
+#journal-modal.hidden{display:none}
+#resident-modal{position:fixed;inset:0;z-index:55;background:rgba(20,16,8,.55);display:flex;align-items:center;justify-content:center;padding:16px;padding-bottom:calc(16px + var(--safe-b))}
+#resident-modal.hidden{display:none}
+#modal{
+  position:fixed;inset:0;z-index:50;
+  background:rgba(20,16,8,.55);
+  display:flex;align-items:center;justify-content:center;
+  padding:16px;
+  padding-bottom:calc(16px + var(--safe-b));
+}
+#modal.hidden{display:none}
+.modal-box{
+  width:100%;max-width:420px;max-height:82svh;
+  overflow-y:auto;-webkit-overflow-scrolling:touch;
+  background:var(--panel);
+  border:4px solid var(--line);
+  box-shadow:6px 6px 0 var(--line);
+  padding:14px;
+}
+.modal-title{
+  font-weight:bold;font-size:15px;letter-spacing:1px;
+  padding-bottom:8px;margin-bottom:8px;
+  border-bottom:3px solid var(--line);
+}
+.modal-tip{
+  font-size:14px;line-height:1.7;color:#7A6A50;margin-bottom:12px;
+}
+#code{
+  width:100%;height:78px;
+  font-family:inherit;font-size:16px;  /* 16px：防 iOS 自动放大 */
+  line-height:1.5;
+  padding:8px;margin:8px 0;
+  color:var(--ink);background:#fff;
+  border:3px solid var(--line);
+  resize:none;outline:none;
+  -webkit-appearance:none;
+}
+.modal-box .wide{
+  display:block;width:100%;
+  padding:13px;font-size:14px;min-height:46px;
+  margin-bottom:8px;
+}
+.modal-box .wide.ghost{background:#fff;color:#7A6A50}
+#modal-msg{
+  font-size:14px;font-weight:bold;color:#B06A00;
+  min-height:18px;text-align:center;
+}
+.relationship-section{margin-top:14px;padding-top:10px;border-top:3px dashed #D7C9A8}
+.relationship-grid{display:grid;grid-template-columns:1fr;gap:7px}
+.relationship-card{padding:8px;background:#FFF9E8;border:2px solid #D7C9A8;font-size:13px;line-height:1.65}
+.relationship-card strong{color:#5C481F}
+.relationship-card .relation-meter{color:#8A6B35;font-size:12px}
+.relationship-card .relation-note{color:#7A6A50;margin-top:2px}
+.resident-work{margin-top:10px}
+.resident-work .work-item{padding:3px 0;border-top:1px dashed #D7C9A8}
+.resident-work .work-item:first-of-type{border-top:0}
+@media (min-width:641px){.relationship-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* V0.3.1：居民生活场景与事件选择 */
+.settlement-life{margin-top:12px;padding:10px;background:#FFF8E5;border:3px solid var(--line);box-shadow:3px 3px 0 rgba(42,34,15,.18)}
+.life-head{display:flex;justify-content:space-between;align-items:center;font-weight:bold;font-size:14px;padding-bottom:8px;border-bottom:2px dashed #D7C9A8}
+.life-head span{font-size:11px;color:#8A7A60;font-weight:normal}
+.life-card{margin-top:8px;padding:9px;background:#fff;border:2px solid #D7C9A8}
+.life-title{font-weight:bold;font-size:13px;color:#5C481F}
+.life-title small{font-weight:normal;color:#8A7A60}
+.life-text{font-size:12px;line-height:1.7;margin-top:4px;color:#6F6049}
+.life-people{font-size:12px;line-height:1.7;margin-top:6px;color:#4E7138;font-weight:bold}
+.life-empty{font-size:12px;line-height:1.7;color:#8A7A60;padding:10px 2px}
+#event-choice-modal{position:fixed;inset:0;z-index:80;background:rgba(20,16,8,.62);display:flex;align-items:center;justify-content:center;padding:16px;padding-bottom:calc(16px + var(--safe-b))}
+#event-choice-modal.hidden{display:none}
+.event-choice-box{max-width:460px}
+.choice-hint{font-size:12px;line-height:1.6;color:#8A7A60;margin-top:4px}
+.discovery-board{margin-top:12px;padding:10px;background:#F5F0D9;border:3px solid var(--line);box-shadow:3px 3px 0 rgba(42,34,15,.15)}
+.discovery-items{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.discovery-item{display:inline-block;padding:5px 7px;background:#fff;border:1px solid #C7B88E;font-size:12px;color:#67532B}
+.discovery-empty{font-size:12px;color:#8A7A60;line-height:1.6}
+.discovery-arc{font-size:12px;line-height:1.7;color:#5C6F40;margin-top:8px;padding-top:7px;border-top:1px dashed #C7B88E}
+#event-choice-options .wide{white-space:normal;text-align:left;line-height:1.5}
+
+/* V0.2.1：可读性与窄屏适配 */
+#topbar{font-size:15px;letter-spacing:.5px}
+#times button{font-size:13px;min-height:38px}
+.stat{font-size:13px;min-height:34px}
+.stat .k{font-size:12px}
+.stat .v{font-size:14px}
+.vhead{font-size:13px}
+.slot{font-size:13px;min-height:92px}
+.slot .n{font-size:14px;white-space:normal;line-height:1.35}
+.slot .d,.slot .cost{font-size:12px;line-height:1.55}
+.slot button{font-size:12.5px;min-height:34px}
+.combo-status{font-size:12px;line-height:1.7}
+.resident-head{font-size:13px}
+.resident-card .resident-name{font-size:14px}
+.resident-card .resident-role{font-size:12px}
+.resident-card .resident-bio{font-size:12px;line-height:1.6}
+.resident-empty{font-size:12px}
+.chronicle-entry{font-size:13px;line-height:1.75}
+.chronicle-entry .when{font-size:12px}
+.chronicle-empty{font-size:13px}
+.modal-tip{font-size:13px;line-height:1.8}
+#modal-msg{font-size:13px}
+@media (max-width:420px){
+  #topbar{gap:5px;padding:8px 9px;font-size:13px}
+  #topbar>div{gap:5px!important}
+  #topbar button{padding-left:7px!important;padding-right:7px!important}
+  .resident-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .resident-card{padding:8px}
+}
+
+
+/* V0.4.0 阶段一：移动端与基础卡片适配（不改变游戏数值和存档结构） */
+@supports (height: 100dvh) {
+  #app { height:100dvh; }
+}
+button, .slot, .resident-card, .life-card, .chronicle-entry {
+  overflow-wrap:anywhere;
+}
+button:focus-visible {
+  outline:3px solid #2F5EA8;
+  outline-offset:3px;
+}
+@media (max-width:640px) {
+  body { display:block; }
+  #app { width:100%; max-width:none; min-height:0; }
+  #topbar { min-height:48px; padding-left:12px; padding-right:10px; }
+  #times { gap:6px; padding:8px 9px 10px; }
+  #times button { min-height:42px; font-size:14px; }
+  .stats { gap:6px; padding:8px; }
+  .stat { min-height:38px; padding:5px 7px; }
+  #page-tabs { position:sticky; top:0; z-index:5; gap:8px; padding:8px; }
+  #page-tabs button { min-height:44px; }
+  #village-page { overflow-y:auto; }
+  #village { padding:10px; }
+  .village-toolbar { padding:10px 10px 0; align-items:flex-start; }
+  #resident-open-btn { min-height:42px; }
+  .vslots { grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+  .slot { min-height:116px; padding:9px; gap:5px; }
+  .slot .n { font-size:14px; }
+  .slot .d { font-size:13px; line-height:1.55; }
+  .slot .cost { font-size:13px; }
+  .slot button { min-height:42px; font-size:14px; }
+  .resident-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+  .resident-card { min-height:92px; padding:9px; }
+  .resident-card .resident-name { font-size:15px; }
+  .resident-card .resident-role, .resident-card .resident-bio { font-size:13px; }
+  .life-card, .chronicle-entry { padding:10px; }
+  .life-title { font-size:14px; }
+  .life-text, .life-people { font-size:13px; }
+  .modal-box { max-height:calc(100dvh - 32px - var(--safe-t) - var(--safe-b)); padding:13px; }
+  #bar { min-height:64px; gap:8px; }
+  #btn { min-height:48px; padding:11px 14px; }
+}
+@media (max-width:380px) {
+  #clock { font-size:21px; }
+  #phase-label { font-size:12px; }
+  #topbar { font-size:13px; }
+  #topbar button { font-size:12px !important; }
+  .stat .k { font-size:11px; }
+  .stat .v { font-size:13px; }
+  .slot { min-height:124px; padding:7px; }
+  .slot .d { font-size:12px; }
+  .resident-grid { grid-template-columns:1fr; }
+}
+@media (max-height:520px) and (orientation:landscape) {
+  #app { height:100dvh; }
+  #times { padding-top:4px; padding-bottom:5px; }
+  #times button { min-height:32px; }
+  .stats { padding:4px 7px; }
+  .stat { min-height:27px; }
+  #bar { padding-top:5px; padding-bottom:calc(5px + var(--safe-b)); }
+  #clock { font-size:20px; }
+  #btn { min-height:38px; padding:7px 12px; }
+  .modal-box { max-height:calc(100dvh - 16px); }
+}
+
+</style>
+</head>
+<body>
+
+<div id="app">
+  <div id="topbar">
+    <span>◆ 像素荒村</span>
+    <div style="display:flex;gap:7px"><button id="journal-btn" style="padding:5px 9px;font-size:13px;min-height:32px;background:transparent;color:var(--gold);border-color:var(--gold);box-shadow:none">村落记事</button><button id="save-btn">存档</button></div>
+  </div>
+
+  <div id="times">
+    <button data-min="1">1分</button>
+    <button data-min="5">5分</button>
+    <button data-min="15">15分</button>
+    <button data-min="25">25分</button>
+    <button data-min="45">45分</button>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><span class="k">区域</span><span class="v" id="region-name">苔藓回廊</span></div>
+    <div class="stat"><span class="k">食材</span><span class="v" id="v-food">0</span></div>
+    <div class="stat"><span class="k">木料</span><span class="v" id="v-wood">0</span></div>
+    <div class="stat"><span class="k">矿料</span><span class="v" id="v-ore">0</span></div>
+  </div>
+
+  <div id="page-tabs" role="tablist" aria-label="游戏页面">
+    <button id="tab-explore" class="active" role="tab" aria-selected="true" aria-controls="explore-page">探索</button>
+    <button id="tab-village" role="tab" aria-selected="false" aria-controls="village-page">村落</button>
+  </div>
+
+  <section id="explore-page" class="page-panel" role="tabpanel" aria-labelledby="tab-explore">
+    <div id="log" aria-label="探索记录" aria-live="polite"></div>
+    <div id="log-resize-handle" role="separator" aria-orientation="horizontal" aria-label="拖动调整探索日志高度" tabindex="0"></div>
+  </section>
+
+  <section id="village-page" class="page-panel hidden" role="tabpanel" aria-labelledby="tab-village">
+    <div class="village-toolbar">
+      <span class="hint">建设营地，逐步恢复这里的生活</span>
+      <button id="resident-open-btn">居民档案 · <span id="resident-count">0 位居民</span></button>
+    </div>
+    <div id="village">
+      <div class="vhead">村落建设 <span id="v-prog">0/4</span></div>
+      <div class="vslots" id="vslots"></div>
+      <div id="combo-status" class="combo-status"></div>
+      <div id="resident-work" class="combo-status resident-work"></div>
+      <div id="settlement-life" class="settlement-life"></div>
+      <div id="discovery-board" class="discovery-board"></div>
+    </div>
+  </section>
+
+  <div id="bar">
+    <div id="clock">25:00</div>
+    <div id="phase-label">准备出发</div>
+    <button id="btn">开始探索</button>
+  </div>
+</div>
+
+<div id="resident-modal" class="hidden" role="dialog" aria-modal="true" aria-labelledby="resident-modal-title">
+  <div class="modal-box">
+    <div class="modal-title" id="resident-modal-title">居民档案</div>
+    <div class="resident-head"><span>已经加入聚落的人</span><span class="resident-count" id="resident-modal-count">0 位居民</span></div>
+    <div id="resident-list" class="resident-grid"></div>
+    <div class="relationship-section">
+      <div class="resident-head"><span>居民之间</span><span class="resident-count">一起经历，会慢慢熟悉</span></div>
+      <div id="relationship-list" class="relationship-grid"></div>
+    </div>
+    <button id="resident-close" class="wide ghost" style="margin-top:10px">关闭档案</button>
+  </div>
+</div>
+
+<div id="event-choice-modal" class="hidden" role="dialog" aria-modal="true" aria-labelledby="event-choice-title">
+  <div class="modal-box event-choice-box">
+    <div class="modal-title" id="event-choice-title">探索中的发现</div>
+    <p class="modal-tip" id="event-choice-text"></p>
+    <div id="event-choice-options"></div>
+    <p class="choice-hint">选择会影响本次带回的物资，也会留下不同的发现。</p>
+  </div>
+</div>
+
+<div id="modal" class="hidden" role="dialog" aria-modal="true" aria-labelledby="save-title">
+  <div class="modal-box">
+    <div class="modal-title" id="save-title">存档</div>
+    <p class="modal-tip">
+      同一个网址下会自动共用存档，不用手动搬。<br>
+      换设备或换浏览器时，用下面的存档码复制搬运。
+    </p>
+    <button id="do-export" class="wide">导出并复制存档码</button>
+    <textarea id="code" placeholder="把存档码粘贴到这里" spellcheck="false" autocapitalize="off" autocomplete="off"></textarea>
+    <button id="do-import" class="wide">导入存档码</button>
+    <button id="do-close" class="wide ghost">关闭</button>
+    <button id="do-reset" class="wide ghost" style="13px;min-height:38px">清空全部进度</button>
+    <div id="modal-msg"></div>
+  </div>
+</div>
+
+<div id="journal-modal" class="hidden" role="dialog" aria-modal="true" aria-labelledby="journal-title">
+  <div class="modal-box">
+    <div class="modal-title" id="journal-title">村落记事</div>
+    <p class="modal-tip">这里记下你们一路走来的重要时刻。探索、建造、组合与迁徙都会留在这里。</p>
+    <div id="chronicle-list"></div>
+    <button id="journal-close" class="wide ghost" style="margin-top:10px">合上记事本</button>
+  </div>
+</div>
+
+<script>
+/* ========================================================
+   数据
+======================================================== */
+const REGIONS = [
+  {
+    name: '苔藓回廊',
+    intro: '你和同行的厨师在两座废弃石廊之间停下脚步。这里背风、有水，离地表出口也不算远。她放下包袱四下看了看，说这地方能住。',
+    buildings: [
+      { name:'篝火', icon:'▲', desc:'烤干衣裳，热口吃的', cost:{wood:3}, effect:'每轮食材 +1', bonus:{food:1},
+        line:'火苗窜起来，回廊里第一次有了暖意。' },
+      { name:'木棚', icon:'■', desc:'好歹算个屋顶', cost:{wood:4,food:2}, effect:'每轮木料 +1', bonus:{wood:1},
+        line:'棚子搭好了，厨师把铺盖一卷扔进去，说这就叫家了。' },
+      { name:'晾晒架', icon:'≡', desc:'把采来的东西挂起来', cost:{wood:3,food:3}, effect:'每轮食材 +1', bonus:{food:1},
+        line:'架子上挂满了菌子和藻，风一过，晃晃悠悠。' },
+      { name:'石灶', icon:'●', desc:'一口正经的灶', cost:{ore:6}, effect:'每轮矿料 +1', bonus:{ore:1},
+        line:'灶膛垒好了。厨师试着生了把火，说烟道通，能做大菜。' },
+    ],
+    combos: [
+      { name:'温暖营地', requires:[0,1], desc:'篝火与木棚相互照应', bonus:{food:1}, effect:'每轮额外食材 +1' },
+      { name:'简易加工区', requires:[2,3], desc:'晾晒架与石灶配合', bonus:{food:1,ore:1}, effect:'每轮额外食材 +1、矿料 +1' },
+    ],
+    ambient: [
+      '石缝里沁出水声，一下一下，像有人在墙里敲。',
+      '墙根的苔藓厚得能陷进手指，凑近闻有潮湿的甜味。',
+      '顶上的钟乳石滴着水，在积水的坑里敲出回声。',
+      '空气很凉，是泥土和旧石头混在一起的味道。',
+      '火把的光在墙上摇晃，影子跟着扭。',
+      '回廊很长，长得看不到头，两侧的石柱上刻着看不懂的花纹。',
+    ],
+    foodLines: [
+      '墙根那丛菌子长得齐整，伞盖泛着淡淡的青。厨师蹲下去闻了闻，说这种煮汤会发苦，得先用炭火烤过才出味。',
+      '石壁上爬满了可以吃的藻，厨师撕了一片嚼了嚼，点头说行，拌点醋就是一道凉菜。',
+      '一只半臂长的盲虾扒在石壁上啃藻，厨师眼疾手快一铲子拍晕，说壳薄肉甜，捡着了。',
+      '水洼边有一窝野蛋，不大，但还热乎。厨师说别全拿，留两个给它们。',
+    ],
+    woodLines: [
+      '苔藓底下翻出几块松动的木板，边角朽了，削一削还能用。',
+      '断裂的廊柱倒在一旁，厨师说这木头是上好的老料，拆下来能搭棚子。',
+      '枯掉的藤蔓缠在石柱上，扯下来晒干，能当绳子使。',
+      '顶上掉下来一截旧梁，木头还没烂透，劈开就是现成的板子。',
+    ],
+    oreLines: [
+      '地砖缝里嵌着亮晶晶的碎屑。厨师抠了半天，抬头说这是铁锈——这地方以前怕是个锻炉。',
+      '墙上的石钉锈得厉害，撬下来一小把，凑一起还能熔点东西。',
+      '碎石堆里混着些发亮的矿石，不大，但沉甸甸的。',
+    ],
+  },
+  {
+    name: '潮湿地窖',
+    intro: '顺着塌了半截的石阶往下走，是间地窖。水从顶上渗下来，但墙厚，塌不了。厨师跺了跺地，说底下是实的，能盖东西。',
+    buildings: [
+      { name:'排水渠', icon:'≡', desc:'把水引走', cost:{wood:5,ore:3}, effect:'每轮木料 +1', bonus:{wood:1},
+        line:'水顺着渠沟流走了，地面终于干了一块。' },
+      { name:'储藏窖', icon:'■', desc:'东西有地方放了', cost:{wood:6,food:3}, effect:'每轮食材 +1', bonus:{food:1},
+        line:'窖门一关，里头凉丝丝的，放什么都坏不了。' },
+      { name:'火把架', icon:'▲', desc:'把地窖照亮', cost:{ore:5,wood:2}, effect:'每轮矿料 +1', bonus:{ore:1},
+        line:'火把一支支挂上去，地窖的墙终于看得清了。' },
+      { name:'砖窑', icon:'●', desc:'烧砖，也烧陶', cost:{ore:8,wood:4}, effect:'每轮矿料 +1', bonus:{ore:1},
+        line:'第一炉砖出来了，还带着温度，敲起来当当响。' },
+    ],
+    combos: [
+      { name:'干燥储藏', requires:[0,1], desc:'排水渠让储藏窖保持干燥', bonus:{food:1}, effect:'每轮额外食材 +1' },
+      { name:'窑火工坊', requires:[2,3], desc:'火把架方便照看砖窑', bonus:{ore:1}, effect:'每轮额外矿料 +1' },
+    ],
+    ambient: [
+      '水从顶上的砖缝往下渗，走几步就得缩一下脖子。',
+      '地窖里弥漫着霉味，但霉味底下压着一股陈年麦香。',
+      '石阶上长了一层薄薄的青苔，踩上去打滑。',
+      '墙角的木桶还站着，桶底烂穿了，积着半桶黑水。',
+      '有老鼠跑过的声音，很快，一路往深处去了。',
+    ],
+    foodLines: [
+      '倒塌的货架底下压着几袋没开封的麦子，隔着袋子都能闻到香。厨师说发了芽的麦子能做甜粥。',
+      '墙角那排陶瓮里腌着东西，揭开盖子，一股酸香冲出来——是还能吃的老酸菜。',
+      '水洼里有鱼，很小，但成群。厨师说这种煮汤最鲜。',
+      '墙上挂着几串风干的辣椒，年头久了，但掰开还有味。',
+    ],
+    woodLines: [
+      '货架的木板还没烂透，拆下来一垛，够打两扇门。',
+      '地窖的梁木塌了半根，剩下的还结实，锯下来是好料。',
+      '一堆废弃的木桶，把桶箍拆了，木头还能用。',
+    ],
+    oreLines: [
+      '墙根埋着一口铁锅，锈得不成样子，但敲开锈壳，锅底那层铁还能回炉。',
+      '水管是铅的还是铁的？厨师敲了敲，说别管是什么，搬回去再说。',
+      '角落里堆着些钉子和铁片，大概是以前修东西剩下的。',
+    ],
+  },
+  {
+    name: '废弃矿道',
+    intro: '矿道的口子开在半坡上。往里走十几步，风就没了。墙上的支架歪了，但还没塌。厨师敲了敲矿壁，说里头有东西。',
+    buildings: [
+      { name:'木支架', icon:'≡', desc:'撑住顶板', cost:{wood:8,ore:4}, effect:'每轮木料 +2', bonus:{wood:2},
+        line:'支架一根根立起来，顶上的碎石总算不掉了。' },
+      { name:'水车', icon:'■', desc:'借地下河的水力', cost:{wood:6,ore:6}, effect:'每轮食材 +1', bonus:{food:1},
+        line:'水车转起来了，吱呀吱呀，一整条矿道都听得见。' },
+      { name:'熔炉', icon:'▲', desc:'把矿石炼成料', cost:{ore:10,wood:5}, effect:'每轮矿料 +2', bonus:{ore:2},
+        line:'炉火一开，整条矿道都红了。厨师说这火候，烤什么都香。' },
+      { name:'升降机', icon:'●', desc:'上下运东西', cost:{wood:10,ore:8}, effect:'每轮全材料 +1', bonus:{food:1,wood:1,ore:1},
+        line:'绞盘转起来，吊斗稳稳地往上走。' },
+    ],
+    combos: [
+      { name:'稳固运输线', requires:[0,3], desc:'木支架加固升降机通道', bonus:{wood:1,ore:1}, effect:'每轮额外木料 +1、矿料 +1' },
+      { name:'水力冶炼', requires:[1,2], desc:'水车为熔炉周边提供便利', bonus:{ore:1}, effect:'每轮额外矿料 +1' },
+    ],
+    ambient: [
+      '矿道比地窖宽，两侧支着歪歪扭扭的木架。',
+      '空气里有一股硫磺味，灯芯烧得噼啪响。',
+      '脚下的轨道断了一截，矿车翻在旁边，车斗里积着碎石。',
+      '很深的地方传来滴水声，声儿传得很远。',
+      '墙上钉着几张发黄的工牌，名字磨得看不清了。',
+    ],
+    foodLines: [
+      '矿道尽头竟然有一小片菌田，以前矿工自己种的，如今长得比人还高。',
+      '积水坑里养着些白鱼，没眼睛，厨师说这种最干净。',
+      '岩缝里有鸟窝，掏了几个蛋，厨师说别贪，留一半给它们。',
+    ],
+    woodLines: [
+      '木支架倒了一片，挑结实的拆，够用一阵。',
+      '矿车斗是木头拼的，拆开就是现成的板子。',
+      '旧轨道下的枕木泡得发软，但有些还硬实。',
+    ],
+    oreLines: [
+      '矿壁上有露头的矿脉，砸几块下来，沉得压手。',
+      '翻倒的矿车里还有半车矿石，没运出去。',
+      '废料堆里挑出不少好料，熔一熔都是能用的。',
+    ],
+  },
+  {
+    name: '地下森林',
+    intro: '矿道尽头豁然开朗。一片说不清多深的地底森林，树是从石头里长出来的，叶子发着幽幽的绿光。厨师站在林边，好半天没说话，最后说了句：这回不愁吃了。',
+    buildings: [
+      { name:'树屋', icon:'■', desc:'住进树里', cost:{wood:12,food:5}, effect:'每轮食材 +2', bonus:{food:2},
+        line:'树屋架在两根粗枝之间，风一吹，微微晃。' },
+      { name:'菌圃', icon:'≡', desc:'自己种，比采的稳', cost:{food:8,wood:6}, effect:'每轮食材 +1', bonus:{food:1},
+        line:'菌圃翻好了土，一排排菌棒整整齐齐。' },
+      { name:'猎场', icon:'▲', desc:'围出一片地方', cost:{wood:10,ore:6}, effect:'每轮食材木料各 +1', bonus:{food:1,wood:1},
+        line:'猎场的栅栏围起来了，里头养着几头不算凶的东西。' },
+      { name:'灯塔', icon:'●', desc:'照亮这片林子', cost:{ore:14,wood:10}, effect:'每轮全材料 +2', bonus:{food:2,wood:2,ore:2},
+        line:'灯塔亮起来的那一刻，整片地底森林都看得见了。' },
+    ],
+    combos: [
+      { name:'林间栽培', requires:[0,1], desc:'树屋照看菌圃，菌圃供给食材', bonus:{food:1}, effect:'每轮额外食材 +1' },
+      { name:'林地守望', requires:[2,3], desc:'猎场与灯塔共同守护林地', bonus:{food:1,wood:1}, effect:'每轮额外食材 +1、木料 +1' },
+    ],
+    ambient: [
+      '树是从石头里长出来的，叶子发着微光。',
+      '空气是湿的，暖的，有花和腐叶混在一起的味道。',
+      '头顶看不到顶，只有一层幽幽的绿光，像极光。',
+      '远处有水流声，很大，大概是条暗河。',
+      '脚下的落叶很厚，踩下去没有声音。',
+    ],
+    foodLines: [
+      '树根底下长着成片的菌子，颜色比外头艳，厨师说越艳越要小心，得先煮透了。',
+      '林子里有会跳的果子，摘下来咬一口，酸得人眯眼，但回味是甜的。',
+      '暗河边有螺，一抓一把，厨师说这种吐干净了爆炒最香。',
+    ],
+    woodLines: [
+      '地底树的枝干脆，但直，砍下来能当梁。',
+      '掉在地上的枯枝堆成小山，捡都捡不完。',
+      '有一种藤，剥开皮里面是空的，轻得像纸，适合编东西。',
+    ],
+    oreLines: [
+      '树根把石头撑裂了，裂口里露出矿脉。',
+      '暗河边冲下来不少石头，有些掂着沉，是矿。',
+      '林子深处有个塌了的洞口，碎石堆里能挑出好料。',
+    ],
+  },
+];
+
+/* ========================================================
+   区域探索事件：轻量随机遭遇，不增加玩家操作步骤
+======================================================== */
+const REGION_EVENTS = [
+  [
+    { title:'旧行囊', text:'石柱后面挂着一只旧行囊，里面的东西被保存得很好。', result:'你翻出一些能用的食材。', effects:{food:2}, type:'good' },
+    { title:'隐蔽储物格', text:'敲击墙面时传来空响。撬开松动的石砖，里面竟藏着一小包矿料。', result:'这趟多带回了些矿料。', effects:{ore:2}, type:'good' },
+    { title:'倒塌的木架', text:'一段木架突然松脱，落下来的木料散了一地。', result:'挑出还能用的部分，木料有所增加。', effects:{wood:2}, type:'good' },
+    { title:'绕远的路', text:'前方的廊道被碎石堵住，你们只好绕了一段路。', result:'耽搁了一些时间，收获略少。', effects:{food:-1}, type:'mild' },
+    { title:'安静的水洼', text:'水洼边有一只小动物探头看了你们一眼，很快又钻回石缝。', result:'你们没有打扰它，只在旁边休息了一会儿。', effects:{}, type:'calm' },
+  ],
+  [
+    { title:'旧粮仓', text:'地窖深处有一只被木板挡住的柜子，里面还剩下一些密封良好的粮食。', result:'厨师仔细检查后，收下了能吃的部分。', effects:{food:2}, type:'good' },
+    { title:'工具箱', text:'潮湿的墙角压着一只铁皮工具箱，锁已经锈坏了。', result:'里面的零件还能回收，矿料增加了。', effects:{ore:2}, type:'good' },
+    { title:'完好的横梁', text:'一根横梁虽然掉了下来，木芯却保存得相当完整。', result:'你们把它拆成了可用的木料。', effects:{wood:2}, type:'good' },
+    { title:'湿滑石阶', text:'一段石阶长满青苔，搬运东西时不小心滑了一下。', result:'少量食材洒进积水里了。', effects:{food:-1}, type:'mild' },
+    { title:'旧留言', text:'墙上有人用炭笔写着一行字：别忘了把灯留给后来的人。', result:'你把这句话记了下来，心里踏实了些。', effects:{}, type:'calm' },
+  ],
+  [
+    { title:'矿工遗物', text:'一顶旧矿帽卡在支架缝里，旁边还放着一只封好的小铁盒。', result:'铁盒里有几块品质不错的矿料。', effects:{ore:3}, type:'good' },
+    { title:'废弃矿车', text:'翻倒的矿车里还压着一捆没来得及运走的木料。', result:'清理出来的木料正好派上用场。', effects:{wood:2}, type:'good' },
+    { title:'地下菌田', text:'一处背风的岩壁下长着一片菌子，长势比别处都好。', result:'厨师挑走了一些成熟的菌子。', effects:{food:2}, type:'good' },
+    { title:'松动的碎石', text:'头顶落下几块碎石，幸好有惊无险，但你们不得不停下来整理装备。', result:'有一点食材在混乱中被压坏了。', effects:{food:-1}, type:'mild' },
+    { title:'矿工刻痕', text:'矿壁上刻着一串歪歪扭扭的记号，像是某个矿工留下的路线提示。', result:'你们记下了这条安全路线，没有额外消耗。', effects:{}, type:'calm' },
+  ],
+  [
+    { title:'发光果丛', text:'树根间长着一丛微微发光的果子，香气引来几只小动物。', result:'你们只摘下成熟的部分，带回一些食材。', effects:{food:3}, type:'good' },
+    { title:'枯枝堆', text:'一棵老树倒在暗河边，枝干干燥而结实。', result:'这些木料足够修补不少东西。', effects:{wood:3}, type:'good' },
+    { title:'矿脉露头', text:'树根撑裂了岩层，露出一小片闪亮的矿脉。', result:'你们敲下几块容易开采的矿石。', effects:{ore:2}, type:'good' },
+    { title:'荧光孢子', text:'一阵风吹过，细小的荧光孢子飘满林间。你们停下来等它们散去。', result:'耽搁了一会儿，少量食材没能妥善保存。', effects:{food:-1}, type:'mild' },
+    { title:'林间访客', text:'一只胆大的小兽把一枚果子放在你们脚边，随后消失在树影里。', result:'你们没有追赶它，只把果子收好。', effects:{food:1}, type:'good' },
+  ],
+];
+
+/* ========================================================
+   区域主线、可选择事件与居民互动
+======================================================== */
+const REGION_STORY_EVENTS = [
+  { id:'moss_echo', title:'墙后的回声', text:'你在苔藓下发现一块松动的石板。石板后有微弱的敲击声，像是有人隔着很远的地方回应。', choices:[
+    {label:'仔细拆开石板', result:'石板后藏着一枚刻有三道波纹的铜片。小禾认出附近还有类似的旧标记。', effects:{ore:1,wood:1}, item:'三纹铜片', clue:1},
+    {label:'先把位置记下来', result:'你没有贸然拆动石板，只拓下了纹路。虽然没有额外材料，但留下了可靠线索。', effects:{food:1}, clue:1}
+  ]},
+  { id:'cellar_map', title:'潮湿地窖的旧图', text:'排水渠深处露出一卷油布。上面画着几条通往更深处的路线，末端都指向同一个圆形标记。', choices:[
+    {label:'沿着标记检查墙面', result:'你找到一枚嵌在砖缝里的旧钥匙。图上的圆形标记并不是出口，而是一处封存室。', effects:{ore:2}, item:'地窖旧钥匙', clue:2},
+    {label:'把地图带回营地研究', result:'你们没有冒险深入，先把路线抄录下来。石岚发现图纸背面还有一行几乎褪色的字。', effects:{wood:1,food:1}, clue:2}
+  ]},
+  { id:'mine_signal', title:'矿道深处的灯号', text:'矿道尽头传来三短一长的敲击声。阿砾停下脚步，说那是旧矿工用来确认彼此平安的信号。', choices:[
+    {label:'按旧信号回应', result:'远处传来回声，随后一块松动的矿壁露出藏匿的小盒。里面有一枚刻着树纹的金属牌。', effects:{ore:2,wood:1}, item:'树纹金属牌', clue:3},
+    {label:'沿安全路线绕过去', result:'你们没有贸然回应，而是沿着支架稳固的路线前进。墙上留下了通往森林的旧标记。', effects:{food:1,ore:1}, clue:3}
+  ]},
+  { id:'forest_heart', title:'森林深处的旧灯', text:'地下森林的树根围着一座被藤蔓遮住的石台。石台上有三个凹槽，形状正好对应一路找到的标记。', choices:[
+    {label:'放入一路收集的线索', result:'铜片、钥匙和金属牌依次嵌入凹槽。石台亮起柔和的光，显出一段关于旧聚落迁徙的记录。', effects:{food:2,wood:2,ore:2}, item:'旧聚落记录', clue:4},
+    {label:'先拓印石台纹路', result:'你们把石台上的图案完整拓了下来。记录尚未完全解开，但已经知道这片森林曾是许多人的避难所。', effects:{food:1,wood:1}, clue:4}
+  ]}
+];
+
+const PAIR_STORIES = {
+  'ali|cenxing': {explore:'阿砾发现岑星总会先敲一敲木料再决定怎么用。她们在矿道边一起检查旧支架，岑星教她听木头内部的回声，阿砾则指出了最安全的落脚点。', night:'夜深后，岑星把一截磨圆的木片递给阿砾，说这是给她做的记号牌。阿砾收进口袋，没有多说什么，第二天却把它挂在了工具袋上。', help:'岑星替阿砾加固了工具架，阿砾则把最顺手的一把凿子留给她。两个人都没说谢，但都记住了这件事。', disagree:'岑星想尽快拆掉一段旧支架，阿砾坚持先确认顶板。她们争了几句，最后一起检查后发现阿砾的担心是对的，岑星也主动补上了加固。'},
+  'laoshi|wenxi': {explore:'闻溪采集药草时，石岚提醒她避开一处渗水的裂缝。闻溪没有反驳，而是把识别过的草叶分出一份，留给石岚做防潮试验。', night:'石岚在火边修工具，闻溪坐在旁边整理药草。她们很久没有说话，直到闻溪把一杯温水放到石岚手边。石岚轻轻点了点头。', help:'闻溪发现石岚的手被旧铁片划伤，替她清理伤口。石岚第二天把一只打磨好的小药盒放在她的桌边。', disagree:'闻溪想留下一片长势很好的药草，石岚认为它挡住了排水沟。她们沿着根系检查后，找到一个两全的移栽位置。'},
+  'xiaohe|yingdeng': {explore:'小禾走得快，萤灯走得轻。一次采集时，小禾差点踩到藏在落叶下的小兽，萤灯及时拉住了她。后来小禾学会了先看地面，再伸手摘果子。', night:'小禾说起小时候一个人守夜的事。萤灯没有打断，只把一枚会发微光的种子放在她掌心，说夜里也可以有一点小小的灯。', help:'萤灯教小禾分辨几种相似的菌子，小禾则把自己记下的采集路线画给她。她们决定以后一起整理一册林地手记。', disagree:'小禾想多采一些成熟果子，萤灯担心会影响小兽过冬。两人沿着果丛观察了一阵，最后约好只采外围成熟的部分。'},
+  'ali|yingdeng': {explore:'阿砾习惯看岩壁，萤灯习惯看树根。她们一起探索时发现，树根正好绕开了最松动的矿层。两种经验拼在一起，找到了一条更安全的路。', night:'萤灯问阿砾还会不会继续寻找旧同伴。阿砾沉默了一会儿，说会，但现在也有了想带回去分享消息的人。', help:'萤灯替阿砾找到一种能固定矿灯的藤，阿砾则做了一个轻巧的灯架。矿道里从此多了一处稳定的光。', disagree:'阿砾认为一处洞口不够安全，萤灯却听见里面有小动物。她们没有立刻进入，而是在外围留下标记，等确认安全再回来。'}
+};
+
+const LIFE_SCENES = {
+  '0:0':{title:'篝火边的夜晚',text:'火光映着石壁，居民们会在这里烘干衣物、分食热汤。',people:['xiaohe','laoshi','wenxi']},
+  '0:1':{title:'木棚里的日常',text:'木棚逐渐有了收纳架和铺盖，小禾常把当天采来的东西分门别类放好。',people:['xiaohe','cenxing']},
+  '1:0':{title:'排水渠旁',text:'石岚会定期检查水流，闻溪也会在附近观察潮湿环境里长出的药草。',people:['laoshi','wenxi']},
+  '1:1':{title:'储藏窖',text:'储藏窖里摆放着整理好的食材，大家会把不易保存的东西优先取用。',people:['wenxi','xiaohe']},
+  '2:0':{title:'矿道支架下',text:'阿砾检查每一根支架，岑星偶尔会过来帮忙修补木楔。',people:['ali','cenxing']},
+  '2:1':{title:'水车边',text:'水车规律地转动，闻溪会在水边查看新长出的植物。',people:['wenxi','yingdeng']},
+  '3:0':{title:'树屋平台',text:'树屋平台能看见林间微光，萤灯常在这里观察森林的变化。',people:['yingdeng','xiaohe']},
+  '3:1':{title:'菌圃',text:'菌棒一排排长出新菌，闻溪负责记录生长情况，小禾会帮忙采收。',people:['wenxi','xiaohe']},
+  '3:2':{title:'林间猎场',text:'围栏内的小兽渐渐不再怕人，萤灯会提醒大家留出安静的活动空间。',people:['yingdeng','ali']},
+  '3:3':{title:'灯塔值守',text:'灯塔亮起后，岑星会检查灯架，阿砾则负责观察远处矿道方向。',people:['cenxing','ali']}
+};
+
+/* ========================================================
+   居民资料：只记录身份与性格，不增加饥饿、心情等管理负担
+======================================================== */
+const RESIDENTS = [
+  {
+    id:'xiaohe', name:'小禾', gender:'女性', orientation:'喜欢女性', role:'采集者', icon:'🌱',
+    personality:'热心、好奇，看到新东西总想凑近看看',
+    background:'曾独自在地下通道生活，熟悉菌类和野果。她在回廊附近遇见你们，决定留下来。',
+    unlock:{region:0, explored:1, built:1},
+    remarks:['这附近的菌子我认得几种，等会儿我带你们去看看。','今天的风很舒服，感觉这里真的能成为家。'],
+    buildRemarks:['这个地方收拾得真好，以后会越来越像家。','我来帮忙递材料吧，别看我个子小，力气可不小。'],
+    story:{afterExplorations:2,title:'小禾的旧路',text:'小禾带你们绕到一条窄窄的侧廊。她说以前总是一个人走这条路，采到东西也只能自己背回来。现在她会下意识地多采一份，因为知道营地里有人等着一起吃。'},
+    contribution:{region:0,building:1,resource:'food',amount:1,desc:'木棚建成后，小禾整理出稳定的菌类采集点：每次探索额外食材 +1'}
+  },
+  {
+    id:'laoshi', name:'石岚', gender:'女性', orientation:'喜欢女性', role:'修缮工', icon:'🪨',
+    personality:'沉稳寡言，做事仔细，不喜欢浪费材料',
+    background:'以前负责维护地窖里的旧设施。地窖废弃后，她一直守着那些还能使用的工具。',
+    unlock:{region:1, explored:1, built:0},
+    remarks:['这段墙体还算结实，别在渗水的地方打桩。','工具要收好，下一次修缮还用得上。'],
+    buildRemarks:['基础打得不错，应该能撑很久。','材料没有浪费，做得可以。'],
+    story:{afterExplorations:2,title:'石岚留下的工具',text:'石岚把一只旧工具袋放在火边。她曾经以为，守着这些工具只是为了等一个不会回来的人。如今她开始把工具分给别人，也终于愿意讲起那段往事。'},
+    contribution:{region:1,building:0,resource:'wood',amount:1,desc:'排水渠修好后，石岚改造了废木料：每次探索额外木料 +1'}
+  },
+  {
+    id:'ali', name:'阿砾', gender:'女性', orientation:'喜欢女性', role:'矿工', icon:'⛏️',
+    personality:'谨慎、可靠，遇到危险会先观察再行动',
+    background:'曾在废弃矿道里寻找失散的同伴，熟悉矿脉和支架结构。',
+    unlock:{region:2, explored:2, built:0},
+    remarks:['前面有松动的岩层，走外侧更安全。','这条矿脉还没挖尽，留着以后慢慢开采。'],
+    buildRemarks:['支架的位置合适，顶板暂时不用担心。','这批矿料成色不错，别随手丢在地上。'],
+    story:{afterExplorations:2,title:'阿砾没有寄出的信',text:'阿砾在矿道旧工牌后面找到一张折了很多次的纸。那是她写给失散同伴的信，一直没能送出去。她没有把信念完，只说等哪天找到出口，想亲自去看看外面的天。'},
+    contribution:{region:2,building:0,resource:'ore',amount:1,desc:'木支架稳固后，阿砾能安全开采深处矿脉：每次探索额外矿料 +1'}
+  },
+  {
+    id:'yingdeng', name:'萤灯', gender:'女性', orientation:'喜欢女性', role:'林地向导', icon:'✨',
+    personality:'安静、敏锐，喜欢观察植物和小动物',
+    background:'从小在地下森林边缘长大，知道哪些果实能吃，也知道怎样不惊扰林中的生灵。',
+    unlock:{region:3, explored:1, built:0},
+    remarks:['看，树根旁边有新长出来的荧光苔。','别追那只小兽，它只是好奇地来看看我们。'],
+    buildRemarks:['灯亮起来以后，夜里的小动物也会安心一些。','留一点空地给植物吧，它们会慢慢长回来的。'],
+    story:{afterExplorations:2,title:'萤灯熟悉的森林',text:'萤灯带你们找到一片只有在安静时才会开放的荧光花。她小时候常来这里躲雨。她说以前不敢带别人来，怕他们不懂得轻声走路；现在她觉得，你们已经学会了。'},
+    contribution:{region:3,building:0,resource:'food',amount:1,desc:'树屋落成后，萤灯照看起周围的菌丛：每次探索额外食材 +1'}
+  },
+  {
+    id:'wenxi', name:'闻溪', gender:'女性', orientation:'喜欢女性', role:'草药师', icon:'🍃',
+    personality:'温和细致，习惯先听别人把话说完',
+    background:'她在地下水道边搭过一间小小的药草屋，靠辨认气味和叶脉照顾伤病。一次长途探索后，她循着营地的炊烟找了过来。',
+    unlock:{focusMinutes:60},
+    remarks:['这些叶子晒干以后还能用，别和菌子混在一起。','水边有新芽，等天气暖一点就能移栽。'],
+    buildRemarks:['有了遮雨的地方，草药就不容易坏了。','我把常用的药草分好类，找起来方便些。'],
+    story:{afterExplorations:2,title:'闻溪的药草册',text:'闻溪把一本边角磨白的册子摊开。里面记录着她照顾过的人，也记录着没能救回来的名字。她说自己以前总怕忘记，现在愿意把新的一页留给营地里的人。'},
+    contribution:{anyBuilt:true,resource:'food',amount:1,desc:'闻溪整理可食用的野生植物：每次探索额外食材 +1（当前区域建成任意建筑后生效）'}
+  },
+  {
+    id:'cenxing', name:'岑星', gender:'女性', orientation:'喜欢女性', role:'木工', icon:'🪵',
+    personality:'爽朗利落，喜欢把想法直接做出来',
+    background:'她曾跟着商队在地下各处修补车厢和木制器具。商队散了以后，她独自走了很久，直到看见营地升起的烟。',
+    unlock:{focusMinutes:180},
+    remarks:['这块木料纹理不错，留着做结实的梁。','工具不用太新，顺手最重要。'],
+    buildRemarks:['给我半天，我能把这处边角修得更牢。','木头要顺着纹理用，别硬劈。'],
+    story:{afterExplorations:2,title:'岑星的旧招牌',text:'岑星从行囊里拿出一块刻着旧商队名字的木牌。她说自己一直没舍得扔，因为那是她学会做木工的地方。她把木牌挂在工棚门口，算是和过去好好告了个别。'},
+    contribution:{anyBuilt:true,resource:'wood',amount:1,desc:'岑星回收并修整边角木料：每次探索额外木料 +1（当前区域建成任意建筑后生效）'}
+  }
+];
+
+/* ========================================================
+   状态
+======================================================== */
+const SAVE_KEY = 'pixel-village-v2';
+
+const S = {
+  phase: 'idle',
+  focusMs: 25 * 60 * 1000,
+  region: 0,
+  mat: { food: 0, wood: 0, ore: 0 },
+  built: [false, false, false, false],
+  finished: false,
+  chronicle: [],
+  residents: [],
+  exploredRegions: [0, 0, 0, 0],
+  builtRegions: REGIONS.map(() => [false, false, false, false]),
+  totalFocusMs: 0,
+  totalExplorations: 0,
+  residentJoinAt: {},
+  residentStories: [],
+  relationships: {},
+  relationshipEvents: [],
+  socialEvents: [],
+  regionDiscoveries: [],
+  hiddenItems: [],
+  regionArc: 0,
+  pendingChoice: null,
+};
+
+/* ========================================================
+   工具
+======================================================== */
+const $ = s => document.querySelector(s);
+const logBox   = $('#log');
+const btn      = $('#btn');
+const clockEl  = $('#clock');
+const phaseEl  = $('#phase-label');
+const vslots   = $('#vslots');
+
+const pick = a => a[Math.floor(Math.random() * a.length)];
+function shuffle(a){
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+function fmtClock(ms){
+  const m = String(Math.floor(ms / 60000)).padStart(2, '0');
+  const s = String(Math.floor((ms % 60000) / 1000)).padStart(2, '0');
+  return m + ':' + s;
+}
+function pushLog(text, cls){
+  const d = document.createElement('div');
+  d.className = 'line ' + (cls || '');
+  d.textContent = text;
+  logBox.appendChild(d);
+  while (logBox.children.length > 220) logBox.removeChild(logBox.firstChild);
+  requestAnimationFrame(() => { logBox.scrollTop = logBox.scrollHeight; });
+}
+
+function addChronicle(type, title, detail){
+  const entry = {
+    time: new Date().toLocaleString('zh-CN', {year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit'}),
+    region: REGIONS[S.region].name,
+    type: type,
+    title: title,
+    detail: detail || ''
+  };
+  S.chronicle.push(entry);
+  if (S.chronicle.length > 100) S.chronicle = S.chronicle.slice(-100);
+}
+function relationKey(a,b){ return [a,b].sort().join('|'); }
+function addResident(id){
+  const resident = RESIDENTS.find(r => r.id === id);
+  if (!resident || S.residents.includes(id)) return false;
+  const previous = S.residents.slice();
+  S.residents.push(id);
+  S.residentJoinAt[id] = S.totalExplorations;
+  previous.forEach(otherId => {
+    const key = relationKey(id, otherId);
+    if (!S.relationships[key]) S.relationships[key] = {familiarity:0, trust:0};
+  });
+  const detail = resident.name + '加入了聚落。' + resident.background;
+  pushLog('✦ 新居民加入：' + resident.name + '。' + resident.role + '，' + resident.personality + '。', 'l-gain');
+  addChronicle('resident', resident.name + '加入了聚落', detail);
+  triggerRegionalResidentDialogueForResident(id);
+  return true;
+}
+function residentRequirementMet(resident){
+  const req = resident.unlock;
+  if (!req) return false;
+  if (Number.isFinite(req.focusMinutes)) return S.totalFocusMs >= req.focusMinutes * 60000;
+  if (S.region < req.region) return false;
+  return (S.exploredRegions[req.region] || 0) >= req.explored && !!(S.builtRegions[req.region] && S.builtRegions[req.region][req.built]);
+}
+function checkResidentUnlocks(){
+  let changed = false;
+  RESIDENTS.forEach(resident => {
+    if (residentRequirementMet(resident) && addResident(resident.id)) changed = true;
+  });
+  return changed;
+}
+function relationLabel(rel){
+  if (rel.familiarity >= 20 && rel.trust >= 14) return '亲近';
+  if (rel.familiarity >= 8 && rel.trust >= 8) return '信任';
+  if (rel.familiarity >= 8) return '熟悉';
+  return '初识';
+}
+function updateRelationships(reason){
+  const ids = S.residents.slice();
+  for (let i=0;i<ids.length;i++) for (let j=i+1;j<ids.length;j++) {
+    const key = relationKey(ids[i],ids[j]);
+    const rel = S.relationships[key] || (S.relationships[key]={familiarity:0,trust:0});
+    const before = relationLabel(rel);
+    rel.familiarity = Math.min(20, rel.familiarity + (reason === 'build' ? 1 : 2));
+    rel.trust = Math.min(14, rel.trust + (reason === 'build' ? 2 : 1));
+    const after = relationLabel(rel);
+    if (after !== before) {
+      const a = RESIDENTS.find(r=>r.id===ids[i]);
+      const b = RESIDENTS.find(r=>r.id===ids[j]);
+      const keyEvent = key + ':' + after;
+      if (!S.relationshipEvents.includes(keyEvent)) {
+        S.relationshipEvents.push(keyEvent);
+        const line = after === '熟悉' ? a.name+'和'+b.name+'渐渐熟悉起来，已经能自然地接过对方手里的活。' : after === '信任' ? a.name+'和'+b.name+'开始放心地把重要的事情交给彼此。' : a.name+'和'+b.name+'之间有了不必多说也能明白的默契。';
+        pushLog('✦ '+line,'l-gain');
+        addChronicle('relationship', a.name+'与'+b.name+'的关系变化：'+after, line);
+      }
+    }
+  }
+}
+function triggerPairEvent(reason){
+  const residents = S.residents.slice();
+  if (residents.length < 2) return false;
+  const types = reason === 'explore' ? ['explore','help'] : reason === 'build' ? ['help','disagree'] : ['night'];
+  const candidates=[];
+  for(let i=0;i<residents.length;i++) for(let j=i+1;j<residents.length;j++) {
+    const ids=[residents[i],residents[j]].sort();
+    const pairKey=ids.join('|');
+    const data=PAIR_STORIES[pairKey] || {};
+    const first=RESIDENTS.find(r=>r.id===ids[0]), second=RESIDENTS.find(r=>r.id===ids[1]);
+    const fallback={
+      explore:first.name+'熟悉'+first.role+'相关的工作，'+second.name+'则凭借'+second.personality+'留意到另一处细节。她们把各自发现拼在一起，找到了一条更妥当的路线。',
+      night:first.name+'和'+second.name+'在夜里聊起各自以前的生活。起初只是断断续续的几句话，后来她们发现，对方也有一些从未对别人提起的习惯。',
+      help:first.name+'看见'+second.name+'正在处理'+second.role+'的工作，便主动搭了把手。两人顺势调整了工具和分工，之后再做起来省力不少。',
+      disagree:first.name+'和'+second.name+'对一件小事有不同看法。她们没有马上说服对方，而是把理由一条条讲清楚，最后找到了都能接受的办法。'
+    };
+    for(const type of types) if((data[type] || fallback[type]) && !S.socialEvents.includes(pairKey+':'+type)) candidates.push({pairKey,type,ids,text:data[type] || fallback[type]});
+  }
+  if(!candidates.length) return false;
+  const item=pick(candidates);
+  S.socialEvents.push(item.pairKey+':'+item.type);
+  const a=RESIDENTS.find(r=>r.id===item.ids[0]);
+  const b=RESIDENTS.find(r=>r.id===item.ids[1]);
+  const title=item.type==='explore'?'一起探索':item.type==='night'?'夜间聊天':item.type==='help'?'互相帮助':'一次小小的分歧';
+  const key=relationKey(a.id,b.id);
+  const rel=S.relationships[key] || (S.relationships[key]={familiarity:0,trust:0});
+  rel.familiarity=Math.min(20,rel.familiarity+2);
+  rel.trust=Math.min(14,rel.trust+(item.type==='disagree'?1:2));
+  pushLog('✦ '+a.name+'与'+b.name+' · '+title+'：'+item.text,'l-gain');
+  addChronicle('social',a.name+'与'+b.name+'：'+title,item.text);
+  return true;
+}
+
+function renderSettlementLife(){
+  const box=$('#settlement-life'); if(!box) return;
+  const active=[];
+  REGIONS[S.region].buildings.forEach((b,i)=>{
+    if(!S.built[i]) return;
+    const scene=LIFE_SCENES[S.region+':'+i];
+    if(!scene) return;
+    const names=scene.people.map(id=>RESIDENTS.find(r=>r.id===id)).filter(r=>r && S.residents.includes(r.id)).map(r=>r.icon+' '+r.name);
+    active.push({building:b.name,...scene,names});
+  });
+  box.innerHTML='<div class="life-head">聚落日常 <span>有人在这里生活</span></div>'+(active.length?active.map(scene=>
+    '<article class="life-card"><div class="life-title">'+scene.title+' <small>· '+scene.building+'</small></div><div class="life-text">'+scene.text+'</div><div class="life-people">'+(scene.names.length?scene.names.join('　'):'暂时还没有居民在这里停留')+'</div></article>'
+  ).join(''):'<div class="life-empty">建成建筑后，这里会逐渐出现居民的生活痕迹。先从一处能避风的地方开始吧。</div>');
+}
+
+function renderDiscoveryBoard(){
+  const box=$('#discovery-board'); if(!box) return;
+  const regionName=REGIONS[S.region].name;
+  const collected=S.hiddenItems.length?S.hiddenItems.map(item=>'<span class="discovery-item">✧ '+item+'</span>').join(''):'<span class="discovery-empty">还没有找到隐藏物品。探索时留意不寻常的痕迹吧。</span>';
+  const arcText=S.regionArc>=4?'四处区域的线索已经汇合，旧聚落的记录被重新拼完整了。':('目前整理出 '+S.regionArc+'/4 段线索。下一段线索藏在后续区域。');
+  box.innerHTML='<div class="life-head">沿途发现 <span>'+S.hiddenItems.length+' 件特别物品</span></div><div class="discovery-items">'+collected+'</div><div class="discovery-arc">旧聚落线索：'+arcText+'</div>';
+}
+
+function showChoiceModal(){
+  const modal=$('#event-choice-modal'); if(!modal || !script || !script.event) return;
+  const event=script.event;
+  $('#event-choice-title').textContent=event.title;
+  $('#event-choice-text').textContent=event.text;
+  const choices=$('#event-choice-options'); choices.innerHTML='';
+  event.choices.forEach((choice,index)=>{
+    const button=document.createElement('button'); button.className='wide'; button.textContent=choice.label;
+    button.addEventListener('click',()=>resolveExplorationChoice(index)); choices.appendChild(button);
+  });
+  modal.classList.remove('hidden');
+}
+function resolveExplorationChoice(index){
+  if(S.phase!=='choice' || !script || !script.event || !script.event.choices[index]) return;
+  const event=script.event, choice=event.choices[index];
+  Object.entries(choice.effects||{}).forEach(([key,value])=>{ if(Object.prototype.hasOwnProperty.call(S.mat,key)) S.mat[key]=Math.max(0,S.mat[key]+value); });
+  if(!S.regionDiscoveries.includes(event.id)) S.regionDiscoveries.push(event.id);
+  S.regionArc=Math.max(S.regionArc,Number(choice.clue)||0);
+  event.choiceResolved=true;
+  event.choiceResult=choice.result;
+  event.choiceLabel=choice.label;
+  event.choiceEffects=choice.effects||{};
+  event.choiceItem=choice.item||null;
+  S.pendingChoice=null;
+  $('#event-choice-modal').classList.add('hidden');
+  S.phase='focus';
+  onFocusEnd();
+}
+
+function triggerRegionalResidentDialogueForResident(id){
+  const lines={
+    0:{xiaohe:'小禾蹲在石板旁摸了摸那三道波纹：「我以前见过类似的记号。它们好像不是装饰，更像是给后来的人留的路标。」',laoshi:'石岚仔细看过铜片边缘：「这不是普通的旧物。有人特意把它留在这里，说明他们希望有人找到。」'},
+    1:{laoshi:'石岚把旧地图压在桌上：「这条路线我认得一部分。以前有人试着把地窖连到更深处，但最后停下了。」',wenxi:'闻溪轻轻抚平油布：「地图背面的字迹像是一份交接记录。写下它的人，应该相信后来会有人接着走。」'},
+    2:{ali:'阿砾盯着树纹金属牌看了很久：「这个记号，我在旧工牌上见过。也许那些失散的人并不是往地面去了。」',cenxing:'岑星转动金属牌，发现背面有一道木纹形刻痕：「这像是某种集合的标记。」'},
+    3:{yingdeng:'萤灯站在石台旁，声音很轻：「这里以前也有人生活过。他们没有消失在森林里，只是把能留下的东西留给了后来的人。」',xiaohe:'小禾把拓印收进册子：「原来我们找到的不是谁的宝藏，是一群人认真生活过的痕迹。」'}
+  };
+  const event=REGION_STORY_EVENTS[S.region];
+  if(!event || !S.regionDiscoveries.includes(event.id)) return false;
+  const text=(lines[S.region]||{})[id];
+  if(!text || !S.residents.includes(id)) return false;
+  const flag='region-response:'+S.region+':'+id;
+  if(S.residentStories.includes(flag)) return false;
+  S.residentStories.push(flag);
+  const resident=RESIDENTS.find(r=>r.id===id);
+  pushLog('「'+text+'」——'+resident.name,'l-amb');
+  addChronicle('regional-dialogue',resident.name+'对'+event.title+'的回应',text);
+  return true;
+}
+function triggerRegionalResidentDialogue(){
+  let triggered=false;
+  S.residents.slice().forEach(id=>{ if(triggerRegionalResidentDialogueForResident(id)) triggered=true; });
+  return triggered;
+}
+
+function triggerResidentStories(){
+  RESIDENTS.forEach(r => {
+    if (!S.residents.includes(r.id) || !r.story) return;
+    const joinedAt = Number.isFinite(S.residentJoinAt[r.id]) ? S.residentJoinAt[r.id] : S.totalExplorations;
+    const flag = r.id + ':main';
+    if (S.totalExplorations - joinedAt >= r.story.afterExplorations && !S.residentStories.includes(flag)) {
+      S.residentStories.push(flag);
+      pushLog('✦ '+r.name+'想起了一段往事。'+r.story.text,'l-gain');
+      addChronicle('story',r.story.title,r.story.text);
+    }
+  });
+}
+function triggerBuildingDialogue(regionIndex, buildingIndex){
+  const lines = {
+    '0:1': {id:'xiaohe',text:'小禾把手伸到火边烤了烤：「以前我总是一个人守着火。现在有人一起吃饭，火好像也没那么容易灭了。」'},
+    '1:0': {id:'laoshi',text:'石岚沿着排水渠检查了一遍：「水走对了路，很多麻烦就少一半。人也是，得有地方安稳下来。」'},
+    '2:0': {id:'ali',text:'阿砾敲了敲新支架：「这回顶板不会轻易塌了。以后我可以带你们往更深处走。」'},
+    '3:0': {id:'yingdeng',text:'萤灯站在树屋下听了很久：「树没有被砍倒，只是借出了一点地方。这样很好。」'}
+  };
+  const item = lines[regionIndex+':'+buildingIndex];
+  if (!item || !S.residents.includes(item.id)) return;
+  const flag = 'building:'+regionIndex+':'+buildingIndex;
+  if (S.residentStories.includes(flag)) return;
+  S.residentStories.push(flag);
+  const resident = RESIDENTS.find(r=>r.id===item.id);
+  pushLog('「'+item.text+'」——'+resident.name,'l-amb');
+  addChronicle('dialogue',resident.name+'在'+REGIONS[regionIndex].buildings[buildingIndex].name+'旁说起的话',item.text);
+}
+function residentContributions(){
+  const active=[];
+  S.residents.forEach(id=>{
+    const r=RESIDENTS.find(x=>x.id===id); if(!r || !r.contribution) return;
+    const c=r.contribution;
+    const regionBuilt=S.builtRegions[S.region] || [];
+    const ready=c.anyBuilt ? regionBuilt.some(Boolean) : (c.region===S.region && !!regionBuilt[c.building]);
+    if(ready) active.push({name:r.name,resource:c.resource,amount:c.amount,desc:c.desc});
+  });
+  return active;
+}
+function getResidentCurrentStatus(resident){
+  const c = resident.contribution;
+  if (c) {
+    const regionBuilt = S.builtRegions[S.region] || [];
+    const ready = c.anyBuilt ? regionBuilt.some(Boolean) : (c.region === S.region && !!regionBuilt[c.building]);
+    if (ready) {
+      const resourceName = c.resource === 'food' ? '食材' : c.resource === 'wood' ? '木料' : '矿料';
+      return '正在协助整理' + resourceName;
+    }
+  }
+  return '在聚落休息';
+}
+function renderResidents(){
+  const list = $('#resident-list');
+  const count = $('#resident-count');
+  const modalCount = $('#resident-modal-count');
+  const relationList = $('#relationship-list');
+  if (!list || !count) return;
+  const residents = RESIDENTS.filter(r => S.residents.includes(r.id));
+  count.textContent = residents.length + ' 位居民';
+  if (modalCount) modalCount.textContent = residents.length + ' 位居民';
+  list.innerHTML = '';
+  if (!residents.length) {
+    const empty = document.createElement('div');
+    empty.className = 'resident-empty';
+    empty.textContent = '暂时还没有居民加入。随着探索和聚落扩建，会有人陆续来到这里。';
+    list.appendChild(empty);
+  } else residents.forEach(r => {
+    const card = document.createElement('div');
+    card.className = 'resident-card';
+    const avatar = document.createElement('div'); avatar.className = 'resident-avatar';
+    avatar.setAttribute('aria-hidden','true'); avatar.textContent = r.icon || '●';
+    const info = document.createElement('div'); info.className = 'resident-info';
+    const name = document.createElement('div'); name.className = 'resident-name'; name.textContent = r.name;
+    const role = document.createElement('div'); role.className = 'resident-role'; role.textContent = r.role;
+    const status = document.createElement('div'); status.className = 'resident-status'; status.textContent = getResidentCurrentStatus(r);
+    const bio = document.createElement('div'); bio.className = 'resident-bio'; bio.textContent = r.personality;
+    const story = document.createElement('div'); story.className = 'resident-story-state';
+    story.textContent = S.residentStories.includes(r.id+':main') ? '个人故事：已分享一段往事' : '个人故事：还有一段往事等待了解';
+    info.append(name, role, status, bio, story);
+    card.append(avatar, info); list.appendChild(card);
+  });
+  if (relationList) {
+    relationList.innerHTML='';
+    for(let i=0;i<residents.length;i++) for(let j=i+1;j<residents.length;j++) {
+      const a=residents[i], b=residents[j], rel=S.relationships[relationKey(a.id,b.id)] || {familiarity:0,trust:0};
+      const card=document.createElement('div'); card.className='relationship-card';
+      const title=document.createElement('strong'); title.textContent=a.name+' × '+b.name+' · '+relationLabel(rel);
+      const meter=document.createElement('div'); meter.className='relation-meter'; meter.textContent='熟悉度 '+rel.familiarity+'/20　信任度 '+rel.trust+'/14';
+      const note=document.createElement('div'); note.className='relation-note'; note.textContent=rel.familiarity>=20&&rel.trust>=14?'已经形成稳定默契。':rel.familiarity>=8&&rel.trust>=8?'彼此已经可以放心托付事情。':rel.familiarity>=8?'相处自然了许多。':'还在慢慢认识彼此。';
+      card.append(title,meter,note); relationList.appendChild(card);
+    }
+    if(residents.length<2){const empty=document.createElement('div');empty.className='resident-empty';empty.textContent='至少有两位居民加入后，这里才会记录她们之间的关系。';relationList.appendChild(empty);}
+  }
+}
+
+function renderResidentWork(){
+  const box=$('#resident-work'); if(!box) return;
+  const active=residentContributions();
+  const residents=RESIDENTS.filter(r=>S.residents.includes(r.id));
+  if(!residents.length){box.innerHTML='<strong>居民协作</strong><div class="waiting">居民加入后，会逐渐参与营地建设。</div>';return;}
+  box.innerHTML='<strong>居民协作 · 当前区域</strong>'+(active.length?active.map(c=>'<div class="work-item active">✦ '+c.name+'：'+c.desc+'</div>').join(''):'<div class="waiting">目前还没有触发居民的区域协作效果；建成对应建筑后即可生效。</div>');
+}
+
+function residentRemark(kind){
+  const available = RESIDENTS.filter(r => S.residents.includes(r.id));
+  if (!available.length) return null;
+  const resident = pick(available);
+  const lines = kind === 'build' ? resident.buildRemarks : resident.remarks;
+  if (!lines || !lines.length) return null;
+  return {name:resident.name, text:pick(lines)};
+}
+
+function renderChronicle(){
+  const list = $('#chronicle-list');
+  if (!list) return;
+  list.innerHTML = '';
+  if (!S.chronicle.length) {
+    list.innerHTML = '<div class="chronicle-empty">记事本还是空的。\n完成第一次探索或建造后，故事就会从这里开始。</div>';
+    return;
+  }
+  S.chronicle.slice().reverse().forEach(entry => {
+    const el = document.createElement('div');
+    el.className = 'chronicle-entry';
+    const when = document.createElement('div'); when.className = 'when';
+    when.textContent = (entry.time || '未知时间') + ' · ' + (entry.region || '未知区域');
+    const what = document.createElement('div'); what.className = 'what'; what.textContent = entry.title;
+    const detail = document.createElement('div'); detail.className = 'detail'; detail.textContent = entry.detail || '';
+    el.append(when, what, detail); list.appendChild(el);
+  });
+}
+
+/* ========================================================
+   存储
+======================================================== */
+let storageOK = true;
+try {
+  localStorage.setItem('__t', '1');
+  localStorage.removeItem('__t');
+} catch (e) {
+  storageOK = false;
+}
+
+function snapshot(){
+  return {
+    v: 8,
+    region: S.region,
+    mat: { food: S.mat.food, wood: S.mat.wood, ore: S.mat.ore },
+    built: S.built.slice(),
+    focusMs: S.focusMs,
+    finished: S.finished,
+    chronicle: S.chronicle.slice(-100),
+    residents: S.residents.slice(),
+    exploredRegions: S.exploredRegions.slice(),
+    builtRegions: S.builtRegions.map(row => row.slice()),
+    totalFocusMs: S.totalFocusMs,
+    totalExplorations: S.totalExplorations,
+    residentJoinAt: {...S.residentJoinAt},
+    residentStories: S.residentStories.slice(),
+    relationships: JSON.parse(JSON.stringify(S.relationships)),
+    relationshipEvents: S.relationshipEvents.slice(),
+    socialEvents: S.socialEvents.slice(),
+    regionDiscoveries: S.regionDiscoveries.slice(),
+    hiddenItems: S.hiddenItems.slice(),
+    regionArc: S.regionArc,
+    pendingChoice: S.pendingChoice ? {...S.pendingChoice} : null,
+    // v3：保存当前计时阶段和探索进度，刷新页面后可接着进行
+    phase: ['focus','rest','choice'].includes(S.phase) ? S.phase : 'idle',
+    endAt: (S.phase === 'focus' || S.phase === 'rest') ? endAt : 0,
+    script: (S.phase === 'focus' || S.phase === 'choice') && script ? script : null,
+    lineIdx: (S.phase === 'focus' || S.phase === 'choice') ? lineIdx : 0,
+  };
+}
+function applySnapshot(d){
+  // 先完整检查结构，再修改游戏状态，避免坏存档造成半载入。
+  if (!d || typeof d !== 'object' || Array.isArray(d)) return false;
+  if (!Number.isInteger(d.region) || d.region < 0 || d.region >= REGIONS.length) return false;
+  if (!d.mat || typeof d.mat !== 'object' || Array.isArray(d.mat)) return false;
+  if (!Array.isArray(d.built) || d.built.length < 4) return false;
+  const resourceKeys = ['food', 'wood', 'ore'];
+  for (const key of resourceKeys) {
+    const value = Number(d.mat[key]);
+    if (!Number.isFinite(value) || value < 0) return false;
+  }
+  S.region = d.region;
+  S.mat = {
+    food: Math.min(99999999, Math.floor(Number(d.mat.food))),
+    wood: Math.min(99999999, Math.floor(Number(d.mat.wood))),
+    ore: Math.min(99999999, Math.floor(Number(d.mat.ore))),
+  };
+  S.built = [0, 1, 2, 3].map(i => !!d.built[i]);
+  if (typeof d.focusMs === 'number' && d.focusMs >= 60000) {
+    S.focusMs = Math.min(60 * 60 * 1000, d.focusMs);
+  }
+  S.finished = !!d.finished;
+  S.chronicle = Array.isArray(d.chronicle) ? d.chronicle.filter(x => x && typeof x.title === 'string').slice(-100) : [];
+  // 新版直接读取探索计数；旧版则从记事本恢复，避免升级后丢失真实探索记录。
+  if (Array.isArray(d.exploredRegions) && d.exploredRegions.length >= REGIONS.length) {
+    S.exploredRegions = REGIONS.map((_, i) => Math.max(0, Math.floor(Number(d.exploredRegions[i]) || 0)));
+  } else {
+    S.exploredRegions = REGIONS.map((_, i) => S.chronicle.filter(e => e.type === 'explore' && e.region === REGIONS[i].name).length);
+  }
+  if (Array.isArray(d.builtRegions) && d.builtRegions.length >= REGIONS.length) {
+    S.builtRegions = REGIONS.map((_, i) => [0,1,2,3].map(j => !!(d.builtRegions[i] && d.builtRegions[i][j])));
+  } else {
+    // 旧版没有历史建筑表：从聚落记事恢复已建建筑；当前区域再以存档 built 字段补齐。
+    S.builtRegions = REGIONS.map((region, ri) => region.buildings.map(b => S.chronicle.some(e => e.type === 'build' && e.region === region.name && e.title === '建成了' + b.name)));
+    S.builtRegions[d.region] = [0,1,2,3].map(i => !!d.built[i]);
+  }
+  S.totalFocusMs = Number.isFinite(Number(d.totalFocusMs)) && Number(d.totalFocusMs) >= 0 ? Math.floor(Number(d.totalFocusMs)) : 0;
+  S.totalExplorations = Number.isFinite(Number(d.totalExplorations)) && Number(d.totalExplorations) >= 0 ? Math.floor(Number(d.totalExplorations)) : S.exploredRegions.reduce((a,b)=>a+b,0);
+  S.residentJoinAt = d.residentJoinAt && typeof d.residentJoinAt === 'object' && !Array.isArray(d.residentJoinAt) ? {...d.residentJoinAt} : {};
+  S.residentStories = Array.isArray(d.residentStories) ? d.residentStories.filter(x=>typeof x==='string').slice(-100) : [];
+  S.relationships = d.relationships && typeof d.relationships==='object' && !Array.isArray(d.relationships) ? d.relationships : {};
+  S.relationshipEvents = Array.isArray(d.relationshipEvents) ? d.relationshipEvents.filter(x=>typeof x==='string').slice(-100) : [];
+  S.socialEvents = Array.isArray(d.socialEvents) ? d.socialEvents.filter(x=>typeof x==='string').slice(-300) : [];
+  S.regionDiscoveries = Array.isArray(d.regionDiscoveries) ? d.regionDiscoveries.filter(x=>typeof x==='string').slice(-30) : [];
+  S.hiddenItems = Array.isArray(d.hiddenItems) ? d.hiddenItems.filter(x=>typeof x==='string').slice(-50) : [];
+  S.regionArc = Math.max(0,Math.min(4,Math.floor(Number(d.regionArc)||0)));
+  if (Number(d.v || 0) < 8 && S.region > 0 && S.regionDiscoveries.length === 0) {
+    S.regionDiscoveries = REGION_STORY_EVENTS.slice(0,S.region).map(event=>event.id);
+    S.regionArc = S.region;
+    S.chronicle.push({time:new Date().toLocaleString('zh-CN'),region:REGIONS[S.region].name,type:'migration',title:'旧行程线索整理',detail:'升级前走过的区域已经留在旧记事里。新的探索会从当前区域继续补全地下聚落的线索。'});
+    S.chronicle = S.chronicle.slice(-100);
+  }
+  S.pendingChoice = d.pendingChoice && typeof d.pendingChoice.eventId==='string' ? {eventId:d.pendingChoice.eventId} : null;
+  const validResidentIds = RESIDENTS.map(r => r.id);
+  const claimed = Array.isArray(d.residents) ? [...new Set(d.residents.filter(id => validResidentIds.includes(id)))] : [];
+  // 不信任旧存档中仅凭区域编号误解锁的居民；只保留当前进度确实满足条件者。
+  S.residents = claimed.filter(id => residentRequirementMet(RESIDENTS.find(r => r.id === id)));
+  S.residents.forEach(id => { if (!Number.isFinite(S.residentJoinAt[id])) S.residentJoinAt[id] = S.totalExplorations; });
+  // 清理无效关系键并为现有居民对补齐初始关系数据。
+  const validRelations = {};
+  for(let i=0;i<S.residents.length;i++) for(let j=i+1;j<S.residents.length;j++) {
+    const key=relationKey(S.residents[i],S.residents[j]); const rel=S.relationships[key] || {};
+    validRelations[key]={familiarity:Math.max(0,Math.min(20,Math.floor(Number(rel.familiarity)||0))),trust:Math.max(0,Math.min(14,Math.floor(Number(rel.trust)||0)))};
+  }
+  S.relationships=validRelations;
+  // 旧版 v2 存档没有运行中的计时信息，按空闲状态载入即可。
+  S.phase = (d.v >= 3 && ['focus','rest','choice'].includes(d.phase)) ? d.phase : 'idle';
+  endAt = (S.phase === 'focus' || S.phase === 'rest') && Number.isFinite(d.endAt) ? d.endAt : 0;
+  script = (S.phase === 'focus' || S.phase === 'choice') && d.script && Array.isArray(d.script.lines) && d.script.yield ? d.script : null;
+  lineIdx = script ? Math.max(0, Math.min(script.lines.length, Number(d.lineIdx) || 0)) : 0;
+  if (S.phase === 'choice' && (!script || !script.event || !Array.isArray(script.event.choices))) { S.phase='idle'; S.pendingChoice=null; }
+  if (S.phase === 'focus' && !script) {
+    S.phase = 'idle';
+    endAt = 0;
+  }
+  if ((S.phase === 'focus' || S.phase === 'rest') && (!endAt || !Number.isFinite(endAt))) {
+    S.phase = 'idle';
+    endAt = 0;
+    script = null;
+    lineIdx = 0;
+  }
+  return true;
+}
+function save(){
+  if (!storageOK) return false;
+  try { localStorage.setItem(SAVE_KEY, JSON.stringify(snapshot())); return true; } catch (e) { return false; }
+}
+function load(){
+  if (!storageOK) return 'unavailable';
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) return 'new';
+    const data = JSON.parse(raw);
+    if (!applySnapshot(data)) return 'invalid';
+    // 将旧版存档迁移到新版结构，并把被旧解锁 Bug 错误加入的居民从存档中纠正。
+    const before = Array.isArray(data.residents) ? data.residents : [];
+    if (data.v !== 8 || JSON.stringify(before) !== JSON.stringify(S.residents) || !Array.isArray(data.builtRegions) || !Array.isArray(data.exploredRegions)) save();
+    return 'loaded';
+  } catch (e) { return 'invalid'; }
+}
+
+/* 存档码：base64(JSON) */
+function b64enc(str){
+  const bytes = new TextEncoder().encode(str);
+  let bin = '';
+  for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+  return btoa(bin);
+}
+function b64dec(b64){
+  const bin = atob(b64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return new TextDecoder().decode(bytes);
+}
+function exportCode(){
+  return 'PXV1:' + b64enc(JSON.stringify(snapshot()));
+}
+function importCode(code){
+  code = (code || '').trim();
+  if (!code) throw new Error('empty');
+  if (code.startsWith('PXV1:')) code = code.slice(5);
+  return JSON.parse(b64dec(code));
+}
+
+/* ========================================================
+   渲染
+======================================================== */
+function renderStats(){
+  const r = REGIONS[S.region];
+  $('#region-name').textContent = r.name;
+  $('#v-food').textContent = S.mat.food;
+  $('#v-wood').textContent = S.mat.wood;
+  $('#v-ore').textContent  = S.mat.ore;
+  $('#v-prog').textContent = S.built.filter(Boolean).length + '/' + r.buildings.length;
+}
+function syncTimes(){
+  document.querySelectorAll('#times button').forEach(b => {
+    b.classList.toggle('on', Number(b.dataset.min) * 60000 === S.focusMs);
+    b.disabled = S.phase === 'focus';
+  });
+}
+function costText(c){
+  const p = [];
+  if (c.food) p.push('食材' + c.food);
+  if (c.wood) p.push('木料' + c.wood);
+  if (c.ore)  p.push('矿料' + c.ore);
+  return p.join(' ');
+}
+function canAfford(c){
+  return (!c.food || S.mat.food >= c.food)
+      && (!c.wood || S.mat.wood >= c.wood)
+      && (!c.ore  || S.mat.ore  >= c.ore);
+}
+function getActiveCombos(){
+  const combos = REGIONS[S.region].combos || [];
+  return combos.filter(combo => combo.requires.every(i => S.built[i]));
+}
+function renderComboStatus(){
+  const box = $('#combo-status');
+  const combos = REGIONS[S.region].combos || [];
+  if (!box || !combos.length) return;
+  box.innerHTML = '<strong>建筑组合</strong>' + combos.map(combo => {
+    const active = combo.requires.every(i => S.built[i]);
+    const names = combo.requires.map(i => REGIONS[S.region].buildings[i].name).join(' + ');
+    return '<div class="' + (active ? 'active' : 'waiting') + '">' +
+      (active ? '✦ 已激活：' : '◇ 待组合：') + combo.name + '（' + names + '）' +
+      ' · ' + (active ? combo.effect : combo.desc) + '</div>';
+  }).join('');
+}
+
+function renderVillage(){
+  const r = REGIONS[S.region];
+  vslots.innerHTML = '';
+  r.buildings.forEach((b, i) => {
+    const built = !!S.built[i];
+    const el = document.createElement('div');
+    el.className = 'slot building-card' + (built ? ' built' : '');
+
+    const name = document.createElement('div'); name.className = 'n';
+    name.textContent = (b.icon || '⌂') + ' ' + b.name;
+    const purpose = document.createElement('div'); purpose.className = 'building-detail';
+    purpose.textContent = '用途：' + b.desc;
+    const output = document.createElement('div'); output.className = 'd';
+    output.textContent = '产出：' + b.effect;
+    const meta = document.createElement('div'); meta.className = 'building-meta';
+    const level = document.createElement('span'); level.className = 'building-tag';
+    level.textContent = '等级：' + (built ? 'Lv.1' : '未建成');
+    const status = document.createElement('span'); status.className = 'building-tag building-status';
+    status.textContent = built ? '已建成' : '待建造';
+    meta.append(level,status);
+    const condition = document.createElement('div'); condition.className = 'cost';
+    condition.textContent = built ? '建造状态：已投入使用' : '建造条件：' + costText(b.cost);
+    const upgrade = document.createElement('div'); upgrade.className = 'building-upgrade';
+    upgrade.textContent = built ? '升级条件：当前版本暂未开放' : '升级条件：建成后可在后续版本查看';
+    el.append(name,purpose,output,meta,condition,upgrade);
+
+    if (!built) {
+      const buildButton = document.createElement('button');
+      buildButton.textContent = '建造';
+      buildButton.disabled = S.phase === 'focus' || !canAfford(b.cost);
+      buildButton.onclick = () => doBuild(i);
+      el.appendChild(buildButton);
+    }
+    vslots.appendChild(el);
+  });
+  renderComboStatus();
+}
+
+function updateButton(){
+  const done = S.built.every(Boolean);
+  const last = S.region >= REGIONS.length - 1;
+
+  if (S.phase === 'focus' || S.phase === 'choice') {
+    btn.disabled = true;
+    btn.textContent = '探索中…';
+    return;
+  }
+  if (done && last) {
+    btn.disabled = true;
+    btn.textContent = '旅程告一段落';
+    return;
+  }
+  if (done && !last) {
+    btn.disabled = false;
+    btn.textContent = '迁往下一处';
+    return;
+  }
+  btn.disabled = false;
+  btn.textContent = S.phase === 'rest' ? '继续探索' : '开始探索';
+}
+function renderAll(){
+  renderStats();
+  renderVillage();
+  renderResidents();
+  renderResidentWork();
+  renderSettlementLife();
+  renderDiscoveryBoard();
+  updateButton();
+  syncTimes();
+}
+
+/* ========================================================
+   建造
+======================================================== */
+function doBuild(i){
+  const b = REGIONS[S.region].buildings[i];
+  if (S.built[i] || !canAfford(b.cost)) return;
+
+  if (b.cost.food) S.mat.food -= b.cost.food;
+  if (b.cost.wood) S.mat.wood -= b.cost.wood;
+  if (b.cost.ore)  S.mat.ore  -= b.cost.ore;
+
+  const activeBefore = getActiveCombos().map(combo => combo.name);
+  S.built[i] = true;
+  S.builtRegions[S.region][i] = true;
+  pushLog('▸ ' + b.icon + ' ' + b.name + '建好了。' + b.line, 'l-title');
+  addChronicle('build', '建成了' + b.name, b.line);
+  updateRelationships('build');
+  triggerPairEvent('build');
+  checkResidentUnlocks();
+  triggerBuildingDialogue(S.region, i);
+  triggerResidentStories();
+  if (Math.random() < 0.35) {
+    const remark = residentRemark('build');
+    if (remark) pushLog('「' + remark.text + '」——' + remark.name, 'l-amb');
+  }
+  getActiveCombos().forEach(combo => {
+    if (!activeBefore.includes(combo.name)) {
+      pushLog('✦ 建筑组合激活：' + combo.name + '。' + combo.effect, 'l-gain');
+      addChronicle('combo', '激活建筑组合：' + combo.name, combo.desc + '；' + combo.effect);
+    }
+  });
+
+  save();
+  renderAll();
+
+  if (S.built.every(Boolean)) {
+    if (S.region >= REGIONS.length - 1) finishGame();
+    else pushLog('▸ 这片地方已经建满。该往下走了。', 'l-gain');
+  }
+}
+function finishGame(){
+  S.finished = true;
+  addChronicle('milestone', '四片荒野都亮起了灯', '你们终于把一路经过的地方，都变成了可以安心生活的营地。');
+  pushLog('★ 四片荒野都亮起了灯。', 'l-win');
+  pushLog('你站在灯塔上回头望——回廊的篝火、地窖的砖窑、矿道的熔炉、林间的树屋，一路亮过来。', 'l-amb');
+  pushLog('厨师蹲在塔沿上啃一颗地底果子，说：「差不多该想想晚饭了。」', 'l-amb');
+  save();
+  updateButton();
+}
+function nextRegion(){
+  S.region = Math.min(S.region + 1, REGIONS.length - 1);
+  S.built = [false, false, false, false];
+  addChronicle('travel', '迁往' + REGIONS[S.region].name, REGIONS[S.region].intro);
+  checkResidentUnlocks();
+  save();
+  const r = REGIONS[S.region];
+  pushLog('', '');
+  pushLog('══ 迁徙 · ' + r.name + ' ══', 'l-title');
+  pushLog(r.intro, 'l-amb');
+  renderAll();
+}
+
+/* ========================================================
+   探索脚本
+======================================================== */
+function computeYield(){
+  const y = {
+    food: 2 + Math.floor(Math.random() * 2),
+    wood: 2 + Math.floor(Math.random() * 2),
+    ore:  1 + Math.floor(Math.random() * 2),
+  };
+  REGIONS[S.region].buildings.forEach((b, i) => {
+    if (S.built[i] && b.bonus) {
+      for (const k in b.bonus) y[k] = (y[k] || 0) + b.bonus[k];
+    }
+  });
+  // 建筑组合奖励由已建成的建筑自动判定，每轮只计算一次。
+  getActiveCombos().forEach(combo => {
+    for (const k in combo.bonus) y[k] = (y[k] || 0) + combo.bonus[k];
+  });
+  residentContributions().forEach(c => { y[c.resource] = (y[c.resource] || 0) + c.amount; });
+  return y;
+}
+function buildScript(){
+  const r  = REGIONS[S.region];
+  const amb = shuffle(r.ambient.slice());
+  const fl  = shuffle(r.foodLines.slice());
+  const wl  = shuffle(r.woodLines.slice());
+  const ol  = shuffle(r.oreLines.slice());
+  const y   = computeYield();
+  // 尚未发现的区域主线事件优先出现；普通资源遭遇仍保留原概率。
+  const storyEvent = REGION_STORY_EVENTS[S.region];
+  let event = storyEvent && !S.regionDiscoveries.includes(storyEvent.id) ? JSON.parse(JSON.stringify(storyEvent)) : null;
+  if (!event) {
+    const common = Math.random() < 0.42 ? pick(REGION_EVENTS[S.region]) : null;
+    event = common ? {...common, id:'common:'+S.region+':'+common.title} : null;
+    if (event && event.effects) for (const k in event.effects) y[k] = Math.max(0, (y[k] || 0) + event.effects[k]);
+  }
+
+  const lines = [];
+  lines.push({ t: '── ' + r.name + ' ──', c: 'l-title' });
+  lines.push({ t: amb[0], c: 'l-amb' });
+  lines.push({ t: amb[1] || amb[0], c: 'l-amb' });
+
+  const nF = Math.min(fl.length, Math.max(1, Math.round(y.food / 2)));
+  for (let i = 0; i < nF; i++) lines.push({ t: fl[i], c: 'l-food' });
+
+  const nW = Math.min(wl.length, Math.max(1, Math.round(y.wood / 2)));
+  for (let i = 0; i < nW; i++) lines.push({ t: wl[i], c: 'l-wood' });
+
+  const nO = Math.min(ol.length, Math.max(1, Math.round(y.ore / 1.5)));
+  for (let i = 0; i < nO; i++) lines.push({ t: ol[i], c: 'l-ore' });
+
+  const target = Math.max(8, Math.min(60, Math.floor(S.focusMs / 1000 / 12)));
+  let ai = 2;
+  while (lines.length < target - 1) {
+    const pos = 2 + Math.floor(Math.random() * Math.max(1, lines.length - 2));
+    lines.splice(pos, 0, { t: amb[ai % amb.length], c: 'l-amb' });
+    ai++;
+  }
+
+  if (Math.random() < 0.28) {
+    const remark = residentRemark('explore');
+    if (remark) lines.push({ t: '「' + remark.text + '」——' + remark.name, c: 'l-amb' });
+  }
+
+  if (event) {
+    lines.push({ t: '✧ 遭遇事件 · ' + event.title, c: 'l-title' });
+    lines.push({ t: event.text, c: 'l-amb' });
+    if (event.choices) lines.push({ t: '· 这件事需要你做出选择。', c: 'l-gain' });
+    else lines.push({ t: '· ' + event.result, c: event.type === 'mild' ? 'l-amb' : 'l-gain' });
+  }
+
+  lines.push({
+    t: '✦ 带回营地：食材×' + y.food + '　木料×' + y.wood + '　矿料×' + y.ore,
+    c: 'l-gain'
+  });
+
+  return { lines: lines, yield: y, event: event ? JSON.parse(JSON.stringify(event)) : null };
+}
+
+/* ========================================================
+   计时
+======================================================== */
+let endAt = 0;
+let clockTimer = null;
+let playTimer  = null;
+let script = null;
+let lineIdx = 0;
+
+function startFocus(){
+  S.phase = 'focus';
+  syncTimes();
+  renderVillage();
+  updateButton();
+  phaseEl.textContent = '探索中';
+
+  pushLog('', '');
+  pushLog('· 你提起灯，往里走了。', 'l-amb');
+
+  script  = buildScript();
+  lineIdx = 0;
+
+  const stepMs = (S.focusMs * 0.9) / script.lines.length;
+
+  clearInterval(playTimer);
+  playTimer = setInterval(() => {
+    if (lineIdx >= script.lines.length) {
+      clearInterval(playTimer);
+      playTimer = null;
+      return;
+    }
+    const it = script.lines[lineIdx++];
+    pushLog(it.t, it.c);
+    save();
+  }, stepMs);
+
+  endAt = Date.now() + S.focusMs;
+  save();
+  clearInterval(clockTimer);
+  clockTimer = setInterval(tick, 250);
+  tick();
+}
+
+function tick(){
+  if (S.phase !== 'focus' && S.phase !== 'rest') return;
+  const left = Math.max(0, endAt - Date.now());
+  clockEl.textContent = fmtClock(left);
+  if (left <= 0) {
+    clearInterval(clockTimer);
+    clockTimer = null;
+    if (S.phase === 'focus') onFocusEnd();
+    else if (S.phase === 'rest') onRestEnd();
+  }
+}
+
+function onFocusEnd(){
+  // 状态先切换，避免计时器重复触发造成重复结算。
+  if (S.phase !== 'focus') return;
+  clearInterval(playTimer);
+  playTimer = null;
+  if (script && script.event && Array.isArray(script.event.choices) && !script.event.choiceResolved) {
+    S.phase='choice'; S.pendingChoice={eventId:script.event.id}; endAt=0;
+    phaseEl.textContent='发现了值得停下的事';
+    pushLog('✧ '+script.event.title+'：你们需要决定接下来怎么做。','l-title');
+    showChoiceModal(); save(); return;
+  }
+
+  if (script) {
+    while (lineIdx < script.lines.length) {
+      const it = script.lines[lineIdx++];
+      pushLog(it.t, it.c);
+    }
+    const y = script.yield;
+    S.exploredRegions[S.region] = (S.exploredRegions[S.region] || 0) + 1;
+    S.totalExplorations += 1;
+    S.totalFocusMs += S.focusMs;
+    S.mat.food += Math.max(0, Number(y.food) || 0);
+    S.mat.wood += Math.max(0, Number(y.wood) || 0);
+    S.mat.ore  += Math.max(0, Number(y.ore) || 0);
+    const eventText = script.event ? ('遭遇：' + script.event.title + '。') : '这次没有遇到特别事件。';
+    addChronicle('explore', '完成了一次探索', eventText + '带回食材×' + y.food + '、木料×' + y.wood + '、矿料×' + y.ore + '。');
+    if (script.event) addChronicle('event', '遭遇事件：' + script.event.title, eventText + (script.event.choiceResult ? '选择：'+script.event.choiceLabel+'。'+script.event.choiceResult : ''));
+    if (script.event && script.event.choiceResult) { pushLog('· 你们选择了：'+script.event.choiceLabel+'。'+script.event.choiceResult,'l-gain'); if(script.event.choiceItem && !S.hiddenItems.includes(script.event.choiceItem)) S.hiddenItems.push(script.event.choiceItem); }
+    updateRelationships('explore');
+    triggerPairEvent('explore');
+    checkResidentUnlocks();
+    if(script.event && script.event.choiceResolved) triggerRegionalResidentDialogue();
+    triggerResidentStories();
+  }
+
+  S.phase = 'rest';
+  const restMs = Math.max(30 * 1000, Math.floor(S.focusMs / 5));
+  endAt = Date.now() + restMs;
+  pushLog('✦ 这一轮探索结束了。回营地歇口气吧。', 'l-win');
+  renderAll();
+  save();
+  phaseEl.textContent = '营地 · 休整中';
+  save();
+  clearInterval(clockTimer);
+  clockTimer = setInterval(tick, 250);
+  tick();
+}
+
+function onRestEnd(){
+  // 休整结束后切回 idle；后续 tick 不会再重复追加日志。
+  if (S.phase !== 'rest') return;
+  clearInterval(clockTimer);
+  clockTimer = null;
+  S.phase = 'idle';
+  endAt = 0;
+  triggerPairEvent('night');
+  clockEl.textContent = '00:00';
+  phaseEl.textContent = '随时出发';
+  pushLog('· 火快灭了。该动了。', 'l-amb');
+  renderAll();
+  save();
+}
+
+function restoreRuntime(){
+  if (S.phase === 'choice') { phaseEl.textContent='发现了值得停下的事'; showChoiceModal(); return; }
+  if (S.phase !== 'focus' && S.phase !== 'rest') {
+    S.phase = 'idle';
+    endAt = 0;
+    return;
+  }
+  if (S.phase === 'focus') {
+    phaseEl.textContent = '探索中 · 已恢复';
+    pushLog('· 你提起灯，继续这次尚未结束的探索。', 'l-amb');
+    if (script) {
+      for (let i = 0; i < lineIdx; i++) {
+        const previous = script.lines[i];
+        pushLog(previous.t, previous.c);
+      }
+    }
+    const remaining = Math.max(0, endAt - Date.now());
+    const leftLines = script ? script.lines.length - lineIdx : 0;
+    if (leftLines > 0 && remaining > 0) {
+      const stepMs = Math.max(250, (remaining * 0.9) / leftLines);
+      playTimer = setInterval(() => {
+        if (S.phase !== 'focus' || !script || lineIdx >= script.lines.length) {
+          clearInterval(playTimer);
+          playTimer = null;
+          return;
+        }
+        const it = script.lines[lineIdx++];
+        pushLog(it.t, it.c);
+        save();
+      }, stepMs);
+    }
+  } else {
+    phaseEl.textContent = '营地 · 休整中 · 已恢复';
+  }
+  clockTimer = setInterval(tick, 250);
+  tick();
+  renderAll();
+  syncTimes();
+}
+
+/* 从后台切回来时立刻补结算 */
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) save();
+  else if (clockTimer) tick();
+});
+window.addEventListener('beforeunload', save);
+
+/* ========================================================
+   交互
+======================================================== */
+btn.onclick = () => {
+  if (S.phase === 'focus') return;
+
+  const done = S.built.every(Boolean);
+  const last = S.region >= REGIONS.length - 1;
+
+  if (done && !last) { nextRegion(); return; }
+  if (done && last)  { return; }
+
+  startFocus();
+};
+
+document.querySelectorAll('#times button').forEach(b => {
+  b.onclick = () => {
+    if (S.phase === 'focus' || S.phase === 'choice') return;
+    S.focusMs = Number(b.dataset.min) * 60000;
+    save();
+    syncTimes();
+    if (S.phase !== 'rest') clockEl.textContent = fmtClock(S.focusMs);
+  };
+});
+
+/* ---------- 页面切换与日志高度 ---------- */
+function switchPage(page){
+  const explore = page === 'explore';
+  $('#explore-page').classList.toggle('hidden', !explore);
+  $('#village-page').classList.toggle('hidden', explore);
+  $('#tab-explore').classList.toggle('active', explore);
+  $('#tab-village').classList.toggle('active', !explore);
+  $('#tab-explore').setAttribute('aria-selected', String(explore));
+  $('#tab-village').setAttribute('aria-selected', String(!explore));
+}
+$('#tab-explore').addEventListener('click', () => switchPage('explore'));
+$('#tab-village').addEventListener('click', () => switchPage('village'));
+$('#resident-open-btn').addEventListener('click', () => { renderResidents(); $('#resident-modal').classList.remove('hidden'); });
+$('#resident-close').addEventListener('click', () => $('#resident-modal').classList.add('hidden'));
+$('#resident-modal').addEventListener('click', e => { if (e.target === $('#resident-modal')) $('#resident-modal').classList.add('hidden'); });
+
+const LOG_HEIGHT_KEY = 'pixel-village-log-height-v1';
+const logHandle = $('#log-resize-handle');
+function setLogHeight(height, persist=true){
+  const page = $('#explore-page');
+  const max = Math.max(160, page.clientHeight - 70);
+  const min = window.matchMedia('(max-width:640px)').matches ? 110 : 180;
+  const next = Math.max(min, Math.min(max, height));
+  logBox.style.flex = '0 0 ' + next + 'px';
+  logBox.style.height = next + 'px';
+  if (persist) { try { localStorage.setItem(LOG_HEIGHT_KEY, String(next)); } catch(e) {} }
+}
+try {
+  const savedHeight = Number(localStorage.getItem(LOG_HEIGHT_KEY));
+  if (savedHeight > 0) requestAnimationFrame(() => setLogHeight(savedHeight, false));
+} catch(e) {}
+let resizingLog = false;
+let resizeStartY = 0;
+let resizeStartHeight = 0;
+logHandle.addEventListener('pointerdown', e => {
+  resizingLog = true; resizeStartY = e.clientY; resizeStartHeight = logBox.getBoundingClientRect().height;
+  logHandle.setPointerCapture(e.pointerId); e.preventDefault();
+});
+logHandle.addEventListener('pointermove', e => {
+  if (!resizingLog) return;
+  setLogHeight(resizeStartHeight + e.clientY - resizeStartY);
+});
+function endLogResize(){ resizingLog = false; }
+logHandle.addEventListener('pointerup', endLogResize);
+logHandle.addEventListener('pointercancel', endLogResize);
+logHandle.addEventListener('keydown', e => {
+  if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+    e.preventDefault(); const delta = e.key === 'ArrowUp' ? -24 : 24;
+    setLogHeight(logBox.getBoundingClientRect().height + delta);
+  }
+});
+window.addEventListener('resize', () => {
+  if (logBox.style.height) setLogHeight(parseFloat(logBox.style.height), false);
+});
+
+/* ---------- 存档弹层 ---------- */
+const modal    = $('#modal');
+const codeEl   = $('#code');
+const msgEl    = $('#modal-msg');
+
+function showMsg(t){ msgEl.textContent = t || ''; }
+
+$('#journal-btn').onclick = () => { renderChronicle(); $('#journal-modal').classList.remove('hidden'); };
+$('#journal-close').onclick = () => $('#journal-modal').classList.add('hidden');
+$('#journal-modal').addEventListener('click', e => { if (e.target === $('#journal-modal')) $('#journal-modal').classList.add('hidden'); });
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  const residents = $('#resident-modal');
+  const journal = $('#journal-modal');
+  if (!$('#event-choice-modal').classList.contains('hidden')) return;
+  if (!residents.classList.contains('hidden')) residents.classList.add('hidden');
+  else if (!journal.classList.contains('hidden')) journal.classList.add('hidden');
+  else if (!modal.classList.contains('hidden')) modal.classList.add('hidden');
+});
+
+$('#save-btn').onclick = () => {
+  if (S.phase === 'focus' || S.phase === 'choice') {
+    pushLog('· 现在还在处理探索中的事情。', 'l-amb');
+    return;
+  }
+  showMsg('');
+  codeEl.value = '';
+  modal.classList.remove('hidden');
+};
+$('#do-close').onclick = () => modal.classList.add('hidden');
+modal.addEventListener('click', e => { if (e.target === modal) modal.classList.add('hidden'); });
+
+$('#do-export').onclick = async () => {
+  const code = exportCode();
+  codeEl.value = code;
+  try {
+    await navigator.clipboard.writeText(code);
+    showMsg('已复制到剪贴板。');
+  } catch (e) {
+    codeEl.focus();
+    codeEl.setSelectionRange(0, code.length);
+    showMsg('请长按上面文本框，全选后复制。');
+  }
+};
+
+$('#do-import').onclick = () => {
+  if (S.phase === 'focus') { showMsg('探索进行中，暂时不能导入存档。'); return; }
+  try {
+    const d = importCode(codeEl.value);
+    // 先验证存档；验证失败时不碰当前计时器和进度。
+    if (!d || typeof d !== 'object' || Array.isArray(d) || !Number.isInteger(d.region) ||
+        d.region < 0 || d.region >= REGIONS.length || !d.mat || typeof d.mat !== 'object' ||
+        !Array.isArray(d.built) || d.built.length < 4 ||
+        !['food','wood','ore'].every(k => Number.isFinite(Number(d.mat[k])) && Number(d.mat[k]) >= 0)) {
+      throw new Error('bad');
+    }
+    clearInterval(clockTimer); clearInterval(playTimer); clockTimer = null; playTimer = null;
+    if (!applySnapshot(d)) throw new Error('bad');
+    save();
+    renderAll();
+    clockEl.textContent = fmtClock(S.focusMs);
+    phaseEl.textContent = '准备出发';
+    restoreRuntime();
+    showMsg('导入成功。');
+    pushLog('▸ 存档已载入。', 'l-title');
+    renderChronicle();
+  } catch (e) {
+    showMsg('存档码无效，检查一下有没有复制全。');
+  }
+};
+
+$('#do-reset').onclick = () => {
+  // 先把旧进度码留在文本框中，用户可复制备份后再清空。
+  let backup = '';
+  try { backup = exportCode(); } catch (e) {}
+  if (backup) codeEl.value = backup;
+  if (!confirm('即将清空当前版本的游戏进度。旧进度存档码已放在上方文本框，请先复制保存。\n\n确定清空并开始新游戏吗？')) {
+    showMsg('已取消清空；原进度未改变，存档码仍保留在文本框中。');
+    return;
+  }
+  try {
+    if (!storageOK) throw new Error('storage unavailable');
+    localStorage.removeItem(SAVE_KEY);
+    if (localStorage.getItem(SAVE_KEY) !== null) throw new Error('remove failed');
+    clearInterval(clockTimer); clearInterval(playTimer);
+    clockTimer = null; playTimer = null; endAt = 0; script = null; lineIdx = 0;
+    // 重置所有内存状态，而不只是删除 localStorage。
+    S.phase = 'idle'; S.focusMs = 25 * 60 * 1000; S.region = 0;
+    S.mat = {food:0, wood:0, ore:0}; S.built = [false,false,false,false];
+    S.finished = false; S.chronicle = []; S.residents = []; S.exploredRegions = [0,0,0,0]; S.builtRegions = REGIONS.map(() => [false,false,false,false]); S.totalFocusMs=0; S.totalExplorations=0; S.residentJoinAt={}; S.residentStories=[]; S.relationships={}; S.relationshipEvents=[]; S.socialEvents=[]; S.regionDiscoveries=[]; S.hiddenItems=[]; S.regionArc=0; S.pendingChoice=null;
+    logBox.innerHTML = '';
+    phaseEl.textContent = '准备出发'; clockEl.textContent = fmtClock(S.focusMs);
+    pushLog('◆ 像素荒村', 'l-title');
+    pushLog(REGIONS[0].intro, 'l-amb');
+    pushLog('「那就先搭个棚子。」同行的厨师说，「剩下的慢慢来。」', 'l-amb');
+    pushLog('── 每完成一次探索，带回材料，建起一处村落。──', 'l-title');
+    renderAll(); syncTimes();
+    showMsg('清空成功！已重置内存状态与当前版本存档。旧进度存档码仍在文本框中，请复制备份。');
+  } catch (e) {
+    showMsg('清空失败：无法确认本地存档已删除。请勿关闭页面，先复制上方旧进度存档码。');
+  }
+};
+
+/* ========================================================
+   启动
+======================================================== */
+const loadStatus = load();
+renderAll();
+clockEl.textContent = fmtClock(S.phase === 'idle' ? S.focusMs : Math.max(0, endAt - Date.now()));
+restoreRuntime();
+
+if (loadStatus === 'invalid') {
+  pushLog('注意：检测到当前版本存档损坏或结构不兼容，已按新游戏状态启动；如有旧存档码，可通过存档窗口尝试导入。', 'l-title');
+} else if (loadStatus === 'new') {
+  pushLog('已开始新游戏。当前没有读取到旧存档。', 'l-amb');
+}
+
+if (!storageOK) {
+  pushLog('◆ 像素荒村', 'l-title');
+  pushLog('注意：当前环境无法保存进度（可能是无痕浏览，或本地文件方式打开）。建议用「存档」里的存档码手动备份。', 'l-title');
+}
+
+if (S.finished) {
+  pushLog('◆ 像素荒村', 'l-title');
+  pushLog('村子建起来了。厨师说，明天该琢磨点什么新菜。', 'l-amb');
+} else if (S.region > 0 || S.built.some(Boolean)) {
+  const r = REGIONS[S.region];
+  pushLog('◆ 像素荒村', 'l-title');
+  pushLog('你回到了' + r.name + '。火还在，活儿也还在。', 'l-amb');
+} else {
+  pushLog('◆ 像素荒村', 'l-title');
+  pushLog(REGIONS[0].intro, 'l-amb');
+  pushLog('「那就先搭个棚子。」厨师说，「剩下的慢慢来。」', 'l-amb');
+  pushLog('── 每完成一次探索，带回材料，建起一处村落。──', 'l-title');
+}
+</script>
+</body>
+</html>
